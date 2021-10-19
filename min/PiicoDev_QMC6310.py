@@ -24,7 +24,10 @@ class PiicoDev_QMC6310:
 			if compat_ind>=1:0
 			else:print(compat_str)
 		except:print(compat_str)
-		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;_CR1=205;_CR2=12;self.i2c.writeto_mem(self.addr,_ADDRESS_Control1,bytes([_CR1]));self.i2c.writeto_mem(self.addr,_ADDRESS_Control2,bytes([_CR2]));f=open(_I,'r');f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline());print(self.x_offset);print(self.y_offset);print(self.z_offset)
+		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;_CR1=205;_CR2=12;self.i2c.writeto_mem(self.addr,_ADDRESS_Control1,bytes([_CR1]));self.i2c.writeto_mem(self.addr,_ADDRESS_Control2,bytes([_CR2]));self.x_offset=0;self.y_offset=0;self.z_offset=0
+		try:f=open(_I,'r');f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline())
+		except:print('Calibration is required.  Please run PiicoDev_QMC6310.calibrate().')
+		print('X Offset: '+str(self.x_offset));print('Y Offset: '+str(self.y_offset));print('Z Offset: '+str(self.z_offset))
 	def _convertAngleToPositive(self,angle):
 		if angle>=360.0:angle=angle-360.0
 		if angle<0:angle=angle+360.0
@@ -44,8 +47,8 @@ class PiicoDev_QMC6310:
 			if z>=32768:z=-(65535-z+1)
 			z_cal=z-self.z_offset;return{_B:x,_C:y,_D:z,_E:x_cal,_F:y_cal,_G:z_cal}
 		else:print('Not Ready');return{_B:float(_A),_C:float(_A),_D:float(_A),_E:float(_A),_F:float(_A),_G:float(_A)}
-	def readPolar(self):cartesian=self.read();pi=math.pi;print(pi);polar=math.atan2(cartesian[_B],cartesian[_C])/pi*180.0;magnitude=math.sqrt(cartesian[_B]*cartesian[_B]+cartesian[_C]*cartesian[_C]+cartesian[_D]*cartesian[_D]);polar=self._convertAngleToPositive(polar);return{'polar':polar,'Gauss':magnitude*2/32767,'uT':magnitude*2/327.67}
-	def readPolarCal(self):cartesian=self.read();pi=math.pi;print(pi);polar=math.atan2(cartesian[_E],cartesian[_F])/pi*180.0;magnitude=math.sqrt(cartesian[_E]*cartesian[_E]+cartesian[_F]*cartesian[_F]+cartesian[_G]*cartesian[_G]);polar=self._convertAngleToPositive(polar);return{_J:polar,'GaussCal':magnitude*2/32767,'uTCal':magnitude*2/327.67}
+	def readPolar(self):cartesian=self.read();pi=math.pi;polar=math.atan2(cartesian[_B],cartesian[_C])/pi*180.0;magnitude=math.sqrt(cartesian[_B]*cartesian[_B]+cartesian[_C]*cartesian[_C]+cartesian[_D]*cartesian[_D]);polar=self._convertAngleToPositive(polar);return{'polar':polar,'Gauss':magnitude*2/32767,'uT':magnitude*2/327.67}
+	def readPolarCal(self):cartesian=self.read();pi=math.pi;polar=math.atan2(cartesian[_E],cartesian[_F])/pi*180.0;magnitude=math.sqrt(cartesian[_E]*cartesian[_E]+cartesian[_F]*cartesian[_F]+cartesian[_G]*cartesian[_G]);polar=self._convertAngleToPositive(polar);return{_J:polar,'GaussCal':magnitude*2/32767,'uTCal':magnitude*2/327.67}
 	def readTruePolar(self,declination=float(_A)):polar=self.readPolarCal();true_polar=polar[_J]+declination;true_polar=self._convertAngleToPositive(true_polar);return{'true_polar',true_polar}
 	def calibrate(self):
 		x_min=0;x_max=0;y_min=0;y_max=0;z_min=0;z_max=0;log='';print('[          ]',end='');range=3000
