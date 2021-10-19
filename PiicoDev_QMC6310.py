@@ -30,28 +30,34 @@ class PiicoDev_QMC6310(object):
         _CR2 = 0x0C   # 00 00 11 00 Range = 2 Gauss 
         self.i2c.writeto_mem(self.addr, _ADDRESS_Control1, bytes([_CR1]))
         self.i2c.writeto_mem(self.addr, _ADDRESS_Control2, bytes([_CR2]))
-        f = open("calibration.cal", "r")
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        f.readline()
-        self.x_offset = float(f.readline())
-        f.readline()
-        self.y_offset = float(f.readline())
-        f.readline()
-        self.z_offset = float(f.readline())
-        print(self.x_offset)
-        print(self.y_offset)
-        print(self.z_offset)
+        self.x_offset = 0
+        self.y_offset = 0
+        self.z_offset = 0
+        try:
+            f = open("calibration.cal", "r")
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            self.x_offset = float(f.readline())
+            f.readline()
+            self.y_offset = float(f.readline())
+            f.readline()
+            self.z_offset = float(f.readline())
+        except:
+            print("Calibration is required.  Please run PiicoDev_QMC6310.calibrate().")
+        print('X Offset: ' + str(self.x_offset))
+        print('Y Offset: ' + str(self.y_offset))
+        print('Z Offset: ' + str(self.z_offset))
     
     def _convertAngleToPositive(self, angle):
         if angle >= 360.0:
@@ -95,7 +101,6 @@ class PiicoDev_QMC6310(object):
     def readPolar(self):
         cartesian = self.read()
         pi = math.pi
-        print(pi)
         polar = (math.atan2(cartesian['x'],cartesian['y'])/pi)*180.0
         magnitude = math.sqrt(cartesian['x']*cartesian['x'] + cartesian['y']*cartesian['y'] + cartesian['z']*cartesian['z'])
         polar = self._convertAngleToPositive(polar)
@@ -104,7 +109,6 @@ class PiicoDev_QMC6310(object):
     def readPolarCal(self):
         cartesian = self.read()
         pi = math.pi
-        print(pi)
         polar = (math.atan2(cartesian['x_cal'],cartesian['y_cal'])/pi)*180.0
         magnitude = math.sqrt(cartesian['x_cal']*cartesian['x_cal'] + cartesian['y_cal']*cartesian['y_cal'] + cartesian['z_cal']*cartesian['z_cal'])
         polar = self._convertAngleToPositive(polar)
