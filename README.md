@@ -30,6 +30,30 @@ This module has been tested on:
  - Raspberry Pi Pico
  - Raspberry Pi SBC
 
+## Details
+### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C)`
+Parameter | Type | Range | Default | Description
+--- | --- | --- | --- | ---
+bus | int | 0,1 | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
+freq | int | 100-1000000 | Device dependent | I2C Bus frequency (Hz).  Ignored on Raspberry Pi
+sda | Pin | Device Dependent | Device Dependent | I2C SDA Pin. Implemented on Raspberry Pi Pico only
+scl | Pin | Device Dependent | Device Dependent | I2C SCL Pin. Implemented on Raspberry Pi Pico only
+addr | int | 0x1C | 0x1C | This address cannot be changed
+
+### `PiicoDev_QMC6310.readTruePolar(declination=)`
+Reads the calibrated magnetic field magnitude and angle in the X and Y plane.
+
+### `PiicoDev_QMC6310.readPolarCal()`
+Reads the calibrated magnetic field magnitude and angle in the X and Y plane.
+
+### `PiicoDev_QMC6310.readPolar()`
+Reads the raw magnetic field magnitude and angle in the X and Y plane.
+
+### `PiicoDev_QMC6310.read()`
+Reads the X, Y and Z components of the magnetic field.
+
+### `PiicoDev_QMC6310.calibrate()`
+Routine to calibrate the magnetometer.
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
