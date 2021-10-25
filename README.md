@@ -42,12 +42,15 @@ addr | int | 0x1C | 0x1C | This address cannot be changed
 
 ### `PiicoDev_QMC6310.readTruePolar(declination=)`
 Reads the calibrated magnetic field magnitude and angle in the X and Y plane.
+Parameter | Type | Range | Description
+--- | --- | --- | ---
+declination | float | 0 - 360 | Magnetic declination
 
 ### `PiicoDev_QMC6310.readPolarCal()`
-Reads the calibrated magnetic field magnitude and angle in the X and Y plane.
+Reads the calibrated magnetic field magnitude and angle (degrees) in the X and Y plane.
 
 ### `PiicoDev_QMC6310.readPolar()`
-Reads the raw magnetic field magnitude and angle in the X and Y plane.
+Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.
 
 ### `PiicoDev_QMC6310.read()`
 Reads the X, Y and Z components of the magnetic field.
