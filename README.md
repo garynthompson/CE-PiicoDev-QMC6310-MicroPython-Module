@@ -31,19 +31,23 @@ This module has been tested on:
  - Raspberry Pi SBC
 
 ## Details
-### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C)`
-Parameter | Type | Range | Default | Description
---- | --- | --- | --- | ---
-bus | int | 0,1 | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
-freq | int | 100-1000000 | Device dependent | I2C Bus frequency (Hz).  Ignored on Raspberry Pi
-sda | Pin | Device Dependent | Device Dependent | I2C SDA Pin. Implemented on Raspberry Pi Pico only
-scl | Pin | Device Dependent | Device Dependent | I2C SCL Pin. Implemented on Raspberry Pi Pico only
-addr | int | 0x1C | 0x1C | This address cannot be changed
+### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C, odr=0, osr1=0, osr2=3, range=3)`
+Parameter | Type | Range            | Default                               | Description
+--------- | ---- | ---------------- | ------------------------------------- | --------------------------------------------------
+bus       | int  | 0, 1             | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
+freq      | int  | 100-1000000      | Device dependent                      | I2C Bus frequency (Hz).  Ignored on Raspberry Pi
+sda       | Pin  | Device Dependent | Device Dependent                      | I2C SDA Pin. Implemented on Raspberry Pi Pico only
+scl       | Pin  | Device Dependent | Device Dependent                      | I2C SCL Pin. Implemented on Raspberry Pi Pico only
+addr      | int  | 0x1C             | 0x1C                                  | This address cannot be changed
+odr       | int  | 0 - 3            | 0                                     | 0: 10Hz, 1: 50Hz, 2: 100Hz, 3: 200Hz
+osr1      | int  | 0 - 3            | 0                                     | 0: 4, 2: 4, 3: 2, 4: 1
+osr2      | int  | 0 - 3            | 3                                     | 0: 1, 1: 2, 2: 4, 4: 8
+range     | int  | 0 - 3            | 3                                     | 0: 30 Gauss, 1: 12 Gauss, 2: 8 Gauss, 3: 2 Gauss
 
 ### `PiicoDev_QMC6310.readTruePolar(declination=)`
 Reads the calibrated magnetic field magnitude and angle in the X and Y plane.
-Parameter | Type | Range | Description
---- | --- | --- | ---
+Parameter   | Type  | Range   | Description
+----------- | ----- | ------- | --------------------
 declination | float | 0 - 360 | Magnetic declination
 
 ### `PiicoDev_QMC6310.readPolarCal()`
@@ -57,6 +61,18 @@ Reads the X, Y and Z components of the magnetic field.
 
 ### `PiicoDev_QMC6310.calibrate()`
 Routine to calibrate the magnetometer.
+
+### `PiicoDev_QMC6310.setOutputDataRate()`
+Sets the Output Data Rate.
+
+### `PiicoDev_QMC6310.setOverSamplingRatio()`
+Sets the Over Sampling Ratio.
+
+### `PiicoDev_QMC6310.setOverSamplingRate()`
+Sets the Over Sampling Rate.
+
+### `PiicoDev_QMC6310.setRange()`
+Sets the Range.
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
