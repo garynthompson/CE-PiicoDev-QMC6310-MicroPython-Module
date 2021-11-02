@@ -63,12 +63,16 @@ Reads the X, Y and Z components of the magnetic field.
 Routine to calibrate the magnetometer.
 
 ### `PiicoDev_QMC6310.setOutputDataRate()`
+Sets the Output Data Rate.
 
 ### `PiicoDev_QMC6310.setOverSamplingRatio()`
+Sets the Over Sampling Ratio.
 
 ### `PiicoDev_QMC6310.setOverSamplingRate()`
+Sets the Over Sampling Rate.
 
 ### `PiicoDev_QMC6310.setRange()`
+Sets the Range.
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
