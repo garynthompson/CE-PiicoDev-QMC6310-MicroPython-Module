@@ -46,8 +46,8 @@ range     | int  | 0 - 3            | 3                                     | 0:
 
 ### `PiicoDev_QMC6310.readTruePolar(declination=)`
 Reads the calibrated magnetic field magnitude and angle in the X and Y plane.
-Parameter | Type | Range | Description
---- | --- | --- | ---
+Parameter   | Type  | Range   | Description
+----------- | ----- | ------- | --------------------
 declination | float | 0 - 360 | Magnetic declination
 
 ### `PiicoDev_QMC6310.readPolarCal()`
@@ -61,6 +61,14 @@ Reads the X, Y and Z components of the magnetic field.
 
 ### `PiicoDev_QMC6310.calibrate()`
 Routine to calibrate the magnetometer.
+
+### `PiicoDev_QMC6310.setOutputDataRate()`
+
+### `PiicoDev_QMC6310.setOverSamplingRatio()`
+
+### `PiicoDev_QMC6310.setOverSamplingRate()`
+
+### `PiicoDev_QMC6310.setRange()`
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
