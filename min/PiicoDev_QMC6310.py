@@ -15,28 +15,45 @@ _I2C_ADDRESS=28
 _ADDRESS_XOUT=1
 _ADDRESS_YOUT=3
 _ADDRESS_ZOUT=5
-_ADDRESS_Status=9
-_ADDRESS_Control1=10
-_ADDRESS_Control2=11
+_ADDRESS_STATUS=9
+_ADDRESS_CONTROL1=10
+_ADDRESS_CONTROL2=11
+_BIT_MODE=0
+_BIT_ODR=2
+_BIT_OSR1=4
+_BIT_OSR2=6
+_BIT_RANGE=2
+def _readBit(x,n):return x&1<<n!=0
+def _setBit(x,n):return x|1<<n
+def _clearBit(x,n):return x&~(1<<n)
+def _writeBit(x,n,b):
+	if b==0:return _clearBit(x,n)
+	else:return _setBit(x,n)
+def _writeCrumb(x,n,c):x=_writeBit(x,n,_readBit(c,0));return _writeBit(x,n+1,_readBit(c,1))
 class PiicoDev_QMC6310:
-	def __init__(self,bus=_H,freq=_H,sda=_H,scl=_H,addr=_I2C_ADDRESS):
+	def __init__(self,bus=_H,freq=_H,sda=_H,scl=_H,addr=_I2C_ADDRESS,odr=0,osr1=0,osr2=3,range=3):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
 		except:print(compat_str)
-		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;_CR1=205;_CR2=12;self.i2c.writeto_mem(self.addr,_ADDRESS_Control1,bytes([_CR1]));self.i2c.writeto_mem(self.addr,_ADDRESS_Control2,bytes([_CR2]));self.x_offset=0;self.y_offset=0;self.z_offset=0
+		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self._CR1=0;self._CR2=0;self._setMode(1);self.setOutputDataRate(odr);self.setOverSamplingRatio(osr1);self.setOverSamplingRate(osr2);self.setRange(range);print(self._CR1);print(self._CR2);self.x_offset=0;self.y_offset=0;self.z_offset=0
 		try:f=open(_I,'r');f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline())
-		except:print('Calibration is required.  Please run PiicoDev_QMC6310.calibrate().')
+		except:print('Calibration is required.  Please run PiicoDev_QMC6310.calibrate().');sleep_ms(3000)
 		print('X Offset: '+str(self.x_offset));print('Y Offset: '+str(self.y_offset));print('Z Offset: '+str(self.z_offset))
+	def _setMode(self,mode):self._CR1=_writeCrumb(self._CR1,_BIT_MODE,mode);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
+	def setOutputDataRate(self,odr):self._CR1=_writeCrumb(self._CR1,_BIT_ODR,odr);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
+	def setOverSamplingRatio(self,osr1):self._CR1=_writeCrumb(self._CR1,_BIT_OSR1,osr1);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
+	def setOverSamplingRate(self,osr2):self._CR1=_writeCrumb(self._CR1,_BIT_OSR2,osr2);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
+	def setRange(self,range):self._CR2=_writeCrumb(self._CR2,_BIT_RANGE,range);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL2,bytes([self._CR2]))
 	def _convertAngleToPositive(self,angle):
 		if angle>=360.0:angle=angle-360.0
 		if angle<0:angle=angle+360.0
 		return angle
-	def getControlRegisters(self):return self.i2c.readfrom_mem(self.addr,_ADDRESS_Control1,2)
-	def _getStatusReady(self,status):return status&1<<0!=0
-	def _getStatusOverflow(self,status):return status&1<<1!=0
+	def getControlRegisters(self):return self.i2c.readfrom_mem(self.addr,_ADDRESS_CONTROL1,2)
+	def _getStatusReady(self,status):return _readBit(status,0)
+	def _getStatusOverflow(self,status):return _readBit(status,1)
 	def read(self):
-		A='little';status=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_Status,1),'')
+		A='little';status=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_STATUS,1),'')
 		if self._getStatusReady(status)is True:
 			x=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_XOUT,2),A);y=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_YOUT,2),A);z=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_ZOUT,2),A)
 			if self._getStatusOverflow(status)is True:print('Overflow');return{_B:float(_A),_C:float(_A),_D:float(_A),_E:float(_A),_F:float(_A),_G:float(_A)}
