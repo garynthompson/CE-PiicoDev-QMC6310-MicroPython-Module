@@ -60,7 +60,7 @@ Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.
 Reads the X, Y and Z components of the magnetic field.
 Parameter   | Type | Range          | Description
 ----------- | ---- | -------------- | -----------
-**Returns** |      |                | **Dictionary**
+**Returns** | **Dictionary**
 x           | int  | -32768 - 32767 | X magnetic field component
 y           | int  | -32768 - 32767 | Y magnetic field component
 z           | int  | -32768 - 32767 | Z magnetic field component
