@@ -46,28 +46,28 @@ range     | int  | 0 - 3            | 3                                     | 0:
 
 ### `PiicoDev_QMC6310.readTruePolar(declination)`
 Reads the magnetic field angle in the X and Y plane using calibration offsets and given declination.
-Parameter   | Type  | Range       | Description | Unit |
------------ | ----- | ----------- | --------------------
-declination | float | 0.0 - 360.0 | Magnetic declination | deg
-**Returns** | (**Dictionary**)
-polar_true  | float | 0.0 to 360.0            | Bearing from true north | deg
+Parameter   | Type  | Range        | Description | Unit
+----------- | ----- | ------------ | ----------- | ------
+declination | float | 0.0 - 360.0  | Magnetic declination | deg
+**Returns** | **Dictionary**
+polar_true  | float | 0.0 to 360.0 | Bearing from true north | deg
 
 ### `PiicoDev_QMC6310.readPolarCal()`
-Reads the magnetic field magnitude and angle (degrees) in the X and Y plane using calibration offsets.
-Parameter   | Type  | Range                   | Description | Unit |
------------ | ----- | ----------------------- | ----------- | ---- |
-**Returns** | (**Dictionary**)
-polar_cal   | float | 0.0 to 360.0            | Calibrated bearing from magnetic north| deg
-Gauss_cal   | float | 0.0 to (2.0 to 30.0)    | Magnetic field strength. Range is configurable using PiicoDev_QMC6310.setRange() | Gauss
-uT_cal      | float | 0.0 to (200.0 to 3000.0 | Magnitude field strength | uT
+Reads the magnetic field magnitude and angle (degrees) in the X and Y plane using calibration offsets.  Range is configurable using PiicoDev_QMC6310.setRange()
+Parameter   | Type  | Range                    | Description | Unit
+----------- | ----- | ------------------------ | ----------- | ----
+**Returns** | **Dictionary**
+polar_cal   | float | 0.0 to 360.0             | Calibrated bearing from magnetic north| deg
+Gauss_cal   | float | 0.0 to (2.0 to 30.0)     | Magnetic field strength | Gauss
+uT_cal      | float | 0.0 to (200.0 to 3000.0) | Magnitude field strength | uT
 
 ### `PiicoDev_QMC6310.readPolar()`
-Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.
-Parameter   | Type  | Range                   | Description | Unit |
------------ | ----- | ----------------------- | ----------- | ---- |
-**Returns** | (**Dictionary**)
+Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.  Range is configurable using PiicoDev_QMC6310.setRange()
+Parameter   | Type  | Range                   | Description | Unit
+----------- | ----- | ----------------------- | ----------- | ----
+**Returns** | **Dictionary**
 polar       | float | 0.0 to 360.0            | Raw bearing from magnetic north | deg
-Gauss       | float | 0.0 to (2.0 to 30.0)    | Magnetic field strength. Range is configurable using PiicoDev_QMC6310.setRange() | Gauss
+Gauss       | float | 0.0 to (2.0 to 30.0)    | Magnetic field strength | Gauss
 uT          | float | 0.0 to (200.0 to 3000.0 | Magnitude field strength | uT
 
 ### `PiicoDev_QMC6310.read()`
