@@ -50,19 +50,17 @@ class PiicoDev_QMC6310(object):
             print(compat_str)
         self.i2c = create_unified_i2c(bus=bus, freq=freq, sda=sda, scl=scl)
         self.addr = addr
-        #self._CR1 = 0xC1 # 11 00 00 01 OSR2 = 8, OSR1 = 8, ODR = 200 Hz, Mode = Normal
-        #self._CR2 = 0x0C   # 00 00 11 00 Range = 2 Gauss
         self._CR1 = 0x00
         self._CR2 = 0x00
-        self._setMode(1)
-        self.setOutputDataRate(odr)
-        self.setOverSamplingRatio(osr1)
-        self.setOverSamplingRate(osr2)
-        self.setRange(range)
-        print(self._CR1)
-        print(self._CR2)
-        #self.i2c.writeto_mem(self.addr, _ADDRESS_CONTROL1, bytes([self._CR1]))
-        #self.i2c.writeto_mem(self.addr, _ADDRESS_CONTROL2, bytes([_CR2]))
+        try:
+            self._setMode(1)
+            self.setOutputDataRate(odr)
+            self.setOverSamplingRatio(osr1)
+            self.setOverSamplingRate(osr2)
+            self.setRange(range)
+        except Exception as e:
+            print(i2c_err_str.format(self.addr))
+            raise e
         self.x_offset = 0
         self.y_offset = 0
         self.z_offset = 0
@@ -120,9 +118,9 @@ class PiicoDev_QMC6310(object):
             angle = angle + 360.0
         return angle
     
-    def getControlRegisters(self):
+    def _getControlRegisters(self):
         return self.i2c.readfrom_mem(self.addr, _ADDRESS_CONTROL1, 2)
-    
+            
     def _getStatusReady(self, status):
         return _readBit(status, 0)
         
@@ -130,14 +128,23 @@ class PiicoDev_QMC6310(object):
         return _readBit(status, 1)
     
     def read(self):
-        status = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_STATUS, 1), '')
+        NaN = {'x':float('NaN'),'y':float('NaN'),'z':float('NaN'),'x_cal':float('NaN'),'y_cal':float('NaN'),'z_cal':float('NaN')}
+        try:
+            status = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_STATUS, 1), '')
+        except:
+            print(i2c_err_str.format(self.addr))
+            return NaN
         if self._getStatusReady(status) is True:
-            x = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_XOUT, 2), 'little')
-            y = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_YOUT, 2), 'little')
-            z = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_ZOUT, 2), 'little')
+            try:
+                x = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_XOUT, 2), 'little')
+                y = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_YOUT, 2), 'little')
+                z = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_ZOUT, 2), 'little')
+            except:
+                print(i2c_err_str.format(self.addr))
+                return NaN
             if self._getStatusOverflow(status) is True:
                 print('Overflow')
-                return {'x':float('NaN'),'y':float('NaN'),'z':float('NaN'),'x_cal':float('NaN'),'y_cal':float('NaN'),'z_cal':float('NaN')}
+                return NaN
             if (x >= 0x8000):
                 x = -((65535 - x) + 1)
             x_cal = x - self.x_offset
@@ -150,7 +157,7 @@ class PiicoDev_QMC6310(object):
             return {'x':x,'y':y,'z':z,'x_cal':x_cal,'y_cal':y_cal,'z_cal':z_cal}
         else:
             print('Not Ready')
-            return {'x':float('NaN'),'y':float('NaN'),'z':float('NaN'),'x_cal':float('NaN'),'y_cal':float('NaN'),'z_cal':float('NaN')}
+            return NaN
     
     def readPolar(self):
         cartesian = self.read()
@@ -158,7 +165,7 @@ class PiicoDev_QMC6310(object):
         polar = (math.atan2(cartesian['x'],cartesian['y'])/pi)*180.0
         magnitude = math.sqrt(cartesian['x']*cartesian['x'] + cartesian['y']*cartesian['y'] + cartesian['z']*cartesian['z'])
         polar = self._convertAngleToPositive(polar)
-        return {'polar':polar, 'Gauss':magnitude*2/32767, 'uT':magnitude*2/327.67} #mGauss
+        return {'polar':polar, 'Gauss':magnitude*2/32767, 'uT':magnitude*2/327.67}
     
     def readPolarCal(self):
         cartesian = self.read()
@@ -166,15 +173,15 @@ class PiicoDev_QMC6310(object):
         polar = (math.atan2(cartesian['x_cal'],cartesian['y_cal'])/pi)*180.0
         magnitude = math.sqrt(cartesian['x_cal']*cartesian['x_cal'] + cartesian['y_cal']*cartesian['y_cal'] + cartesian['z_cal']*cartesian['z_cal'])
         polar = self._convertAngleToPositive(polar)
-        return {'polarCal':polar, 'GaussCal':magnitude*2/32767, 'uTCal':magnitude*2/327.67} #mGauss
+        return {'polar_cal':polar, 'Gauss_cal':magnitude*2/32767, 'uT_cal':magnitude*2/327.67}
     
     def readTruePolar(self, declination=float('NaN')):
         polar = self.readPolarCal()
-        true_polar = polar['polarCal'] + declination
-        true_polar = self._convertAngleToPositive(true_polar)
-        return {'true_polar', true_polar}
+        polar_true = polar['polar_cal'] + declination
+        polar_true = self._convertAngleToPositive(polar_true)
+        return {'polar_true':polar_true, 'Gauss_cal':polar['Gauss_cal'], 'uT_cal':polar['uT_cal']}
     
-    def calibrate(self):
+    def calibrate(self, enable_logging=False):
         x_min = 0
         x_max = 0
         y_min = 0
@@ -184,21 +191,28 @@ class PiicoDev_QMC6310(object):
         log = ''
         print('[          ]', end='')
         range = 3000
-        for i in range(range):
+        i = 0
+        while i < range:
+            i += 1
             cartesian = self.read()
-#             print(cartesian)
             if cartesian['x'] < x_min:
                 x_min = cartesian['x']
+                i = 0
             if cartesian['x'] > x_max:
                 x_max = cartesian['x']
+                i = 0
             if cartesian['y'] < y_min:
                 y_min = cartesian['y']
+                i = 0
             if cartesian['y'] > y_max:
                 y_max = cartesian['y']
+                i = 0
             if cartesian['z'] < z_min:
                 z_min = cartesian['z']
+                i = 0
             if cartesian['z'] > z_max:
                 z_max = cartesian['z']
+                i = 0
             if i == range/10:
                 print('\015[*         ]', end='')
             if i == 2*range/10:
@@ -219,7 +233,8 @@ class PiicoDev_QMC6310(object):
                 print('\015[********* ]', end='')
             if i == 10*range/10-1:
                 print('\015[**********]')
-            log = log + (str(cartesian['x']) + ',' + str(cartesian['y']) + ',' + str(cartesian['z']) + '\n')
+            if enable_logging:
+                log = log + (str(cartesian['x']) + ',' + str(cartesian['y']) + ',' + str(cartesian['z']) + '\n')
             sleep_ms(5)
         x_offset_new = (x_max + x_min) / 2
         y_offset_new = (y_max + y_min) / 2
@@ -231,22 +246,7 @@ class PiicoDev_QMC6310(object):
         print('x_offset_new: ' + str(x_offset_new))
         print('y_offset_new: ' + str(y_offset_new))
         print('z_offset_new: ' + str(z_offset_new))
-        flog = open("calibration.log", "w")
-        flog.write(log)
-        flog.close
-#             print('x_min' + str(x_min))
-#             print('x_max' + str(x_max))
-#             print('y_min' + str(y_min))
-#             print('y_max' + str(y_max))
-#             print('z_min' + str(z_min))
-#             print('z_max' + str(z_max))
-#     def readInclination(self):
-#         cartesian = self.read()
-#         pi = math.pi
-#         print(pi)
-#         polar = (math.atan2(math.sqrt(cartesian['x']*cartesian['x']+cartesian['y']*cartesian['y']),cartesian['z'])/pi)*180.0
-#         magnitude = math.sqrt(cartesian['x']*cartesian['x'] + cartesian['y']*cartesian['y'] + cartesian['z']*cartesian['z'])
-#         polar = self._convertAngleToPositive(polar)
-#         return {'inclination':polar}
-
-#todo returnfloat('NaN') when disconnected
+        if enable_logging:
+            flog = open("calibration.log", "w")
+            flog.write(log)
+            flog.close
