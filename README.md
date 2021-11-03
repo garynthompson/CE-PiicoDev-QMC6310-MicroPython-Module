@@ -44,56 +44,70 @@ osr1      | int  | 0 - 3            | 0                                     | 0:
 osr2      | int  | 0 - 3            | 3                                     | 0: 1, 1: 2, 2: 4, 4: 8
 range     | int  | 0 - 3            | 3                                     | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
 
-### `PiicoDev_QMC6310.readTruePolar(declination=)`
-Reads the calibrated magnetic field magnitude and angle in the X and Y plane.
-Parameter   | Type  | Range   | Description
------------ | ----- | ------- | --------------------
-declination | float | 0 - 360 | Magnetic declination
+### `PiicoDev_QMC6310.readTruePolar(declination)`
+Reads the magnetic field angle in the X and Y plane using calibration offsets and given declination.
+Parameter   | Type  | Range       | Description | Unit |
+----------- | ----- | ----------- | --------------------
+declination | float | 0.0 - 360.0 | Magnetic declination | deg
+**Returns** | (**Dictionary**)
+polar_true  | float | 0.0 to 360.0            | Bearing from true north | deg
 
 ### `PiicoDev_QMC6310.readPolarCal()`
-Reads the calibrated magnetic field magnitude and angle (degrees) in the X and Y plane.
+Reads the magnetic field magnitude and angle (degrees) in the X and Y plane using calibration offsets.
+Parameter   | Type  | Range                   | Description | Unit |
+----------- | ----- | ----------------------- | ----------- | ---- |
+**Returns** | (**Dictionary**)
+polar_cal   | float | 0.0 to 360.0            | Calibrated bearing from magnetic north| deg
+Gauss_cal   | float | 0.0 to (2.0 to 30.0)    | Magnetic field strength. Range is configurable using PiicoDev_QMC6310.setRange() | Gauss
+uT_cal      | float | 0.0 to (200.0 to 3000.0 | Magnitude field strength | uT
 
 ### `PiicoDev_QMC6310.readPolar()`
 Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.
+Parameter   | Type  | Range                   | Description | Unit |
+----------- | ----- | ----------------------- | ----------- | ---- |
+**Returns** | (**Dictionary**)
+polar       | float | 0.0 to 360.0            | Raw bearing from magnetic north | deg
+Gauss       | float | 0.0 to (2.0 to 30.0)    | Magnetic field strength. Range is configurable using PiicoDev_QMC6310.setRange() | Gauss
+uT          | float | 0.0 to (200.0 to 3000.0 | Magnitude field strength | uT
 
 ### `PiicoDev_QMC6310.read()`
 Reads the X, Y and Z components of the magnetic field.
-Parameter   | Type | Range          | Description
------------ | ---- | -------------- | -----------
+Parameter   | Type | Range           | Description
+----------- | ---- | --------------- | -----------
 **Returns** | **Dictionary**
-x           | int  | -32768 - 32767 | X magnetic field component
-y           | int  | -32768 - 32767 | Y magnetic field component
-z           | int  | -32768 - 32767 | Z magnetic field component
-x_cal       | int  | -32768 - 32767 | X magnetic field component using calibration offsets
-y_cal       | int  | -32768 - 32767 | Y magnetic field component using calibration offsets
-z_cal       | int  | -32768 - 32767 | Z magnetic field component using calibration offsets
+x           | int  | -32768 to 32767 | X magnetic field component
+y           | int  | -32768 to 32767 | Y magnetic field component
+z           | int  | -32768 to 32767 | Z magnetic field component
+x_cal       | int  | -32768 to 32767 | X magnetic field component using calibration offsets
+y_cal       | int  | -32768 to 32767 | Y magnetic field component using calibration offsets
+z_cal       | int  | -32768 to 32767 | Z magnetic field component using calibration offsets
 
 ### `PiicoDev_QMC6310.calibrate()`
 Routine to calibrate the magnetometer.
 
 ### `PiicoDev_QMC6310.setOutputDataRate(odr)`
 Sets the Output Data Rate.
-Parameter | Type | Range | Description
---------- | ---- | ----  | -----------
-odr       | int  | 0 - 3 | 0: 10Hz, 1: 50Hz, 2: 100Hz, 3: 200Hz
+Parameter | Type | Range  | Description
+--------- | ---- | ------ | -----------
+odr       | int  | 0 to 3 | 0: 10Hz, 1: 50Hz, 2: 100Hz, 3: 200Hz
 
 ### `PiicoDev_QMC6310.setOverSamplingRatio(osr1)`
 Sets the Over Sampling Ratio.
-Parameter | Type | Range | Description
---------- | ---- | ----  | -----------
-osr1      | int  | 0 - 3 | 0: 4, 2: 4, 3: 2, 4: 1
+Parameter | Type | Range  | Description
+--------- | ---- | ------ | -----------
+osr1      | int  | 0 to 3 | 0: 4, 2: 4, 3: 2, 4: 1
 
 ### `PiicoDev_QMC6310.setOverSamplingRate(osr2)`
 Sets the Over Sampling Rate.
-Parameter | Type | Range | Description
---------- | ---- | ----  | -----------
-osr2      | int  | 0 - 3 | 0: 1, 1: 2, 2: 4, 4: 8
+Parameter | Type | Range  | Description
+--------- | ---- | ------ | -----------
+osr2      | int  | 0 to 3 | 0: 1, 1: 2, 2: 4, 4: 8
 
 ### `PiicoDev_QMC6310.setRange(range)`
 Sets the Range.
-Parameter | Type | Range | Description
---------- | ---- | ----  | -----------
-range     | int  | 0 - 3 | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
+Parameter | Type | Range  | Description
+--------- | ---- | ------ | -----------
+range     | int  | 0 to 3 | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
