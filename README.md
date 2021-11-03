@@ -45,15 +45,17 @@ osr2      | int  | 0 - 3            | 3                                     | 0:
 range     | int  | 0 - 3            | 3                                     | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
 
 ### `PiicoDev_QMC6310.readTruePolar(declination)`
-Reads the magnetic field angle in the X and Y plane using calibration offsets and given declination.
+Reads the magnetic field magnitude and bearing from true north using calibration offsets and given declination.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
 Parameter   | Type  | Range        | Description | Unit
 ----------- | ----- | ------------ | ----------- | ------
 declination | float | 0.0 - 360.0  | Magnetic declination | deg
 **Returns** | **Dictionary**
 polar_true  | float | 0.0 to 360.0 | Bearing from true north | deg
+Gauss_cal   | float | 0.0 to (2.0 to 30.0)     | Magnetic field strength | Gauss
+uT_cal      | float | 0.0 to (200.0 to 3000.0) | Magnitude field strength | uT
 
 ### `PiicoDev_QMC6310.readPolarCal()`
-Reads the magnetic field magnitude and angle (degrees) in the X and Y plane using calibration offsets.  Range is configurable using PiicoDev_QMC6310.setRange()
+Reads the magnetic field magnitude and bearing from magnetic north using calibration offsets.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
 Parameter   | Type  | Range                    | Description | Unit
 ----------- | ----- | ------------------------ | ----------- | ----
 **Returns** | **Dictionary**
@@ -62,7 +64,7 @@ Gauss_cal   | float | 0.0 to (2.0 to 30.0)     | Magnetic field strength | Gauss
 uT_cal      | float | 0.0 to (200.0 to 3000.0) | Magnitude field strength | uT
 
 ### `PiicoDev_QMC6310.readPolar()`
-Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.  Range is configurable using PiicoDev_QMC6310.setRange()
+Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
 Parameter   | Type  | Range                   | Description | Unit
 ----------- | ----- | ----------------------- | ----------- | ----
 **Returns** | **Dictionary**
@@ -83,7 +85,7 @@ y_cal       | int  | -32768 to 32767 | Y magnetic field component using calibrat
 z_cal       | int  | -32768 to 32767 | Z magnetic field component using calibration offsets
 
 ### `PiicoDev_QMC6310.calibrate()`
-Routine to calibrate the magnetometer.
+Routine to calibrate the magnetometer.  Rotate the magnetometer in the X and Y or X, Y, & Z directions until the routine is complete.
 
 ### `PiicoDev_QMC6310.setOutputDataRate(odr)`
 Sets the Output Data Rate.
