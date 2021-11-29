@@ -1,5 +1,5 @@
-_L='polar_cal'
-_K='calibration.cal'
+_L='calibration.cal'
+_K='polar_cal'
 _J='uT_cal'
 _I='Gauss_cal'
 _H='z_cal'
@@ -41,10 +41,7 @@ class PiicoDev_QMC6310:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self._CR1=0;self._CR2=0
 		try:self._setMode(1);self.setOutputDataRate(odr);self.setOverSamplingRatio(osr1);self.setOverSamplingRate(osr2);self.setRange(range)
 		except Exception as e:print(i2c_err_str.format(self.addr));raise e
-		self.x_offset=0;self.y_offset=0;self.z_offset=0
-		try:f=open(_K,'r');f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline())
-		except:print('Calibration is required.  Please run PiicoDev_QMC6310.calibrate().');sleep_ms(3000)
-		print('X Offset: '+str(self.x_offset));print('Y Offset: '+str(self.y_offset));print('Z Offset: '+str(self.z_offset))
+		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.loadCalibration()
 	def _setMode(self,mode):self._CR1=_writeCrumb(self._CR1,_BIT_MODE,mode);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOutputDataRate(self,odr):self._CR1=_writeCrumb(self._CR1,_BIT_ODR,odr);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOverSamplingRatio(self,osr1):self._CR1=_writeCrumb(self._CR1,_BIT_OSR1,osr1);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
@@ -73,10 +70,10 @@ class PiicoDev_QMC6310:
 			z_cal=z-self.z_offset;return{_A:x,_B:y,_C:z,_E:x_cal,_F:y_cal,_H:z_cal}
 		else:print('Not Ready');return NaN
 	def readPolar(self):cartesian=self.read();pi=math.pi;polar=math.atan2(cartesian[_A],cartesian[_B])/pi*180.0;magnitude=math.sqrt(cartesian[_A]*cartesian[_A]+cartesian[_B]*cartesian[_B]+cartesian[_C]*cartesian[_C]);polar=self._convertAngleToPositive(polar);return{'polar':polar,'Gauss':magnitude*2/32767,'uT':magnitude*2/327.67}
-	def readPolarCal(self):cartesian=self.read();pi=math.pi;polar=math.atan2(cartesian[_E],cartesian[_F])/pi*180.0;magnitude=math.sqrt(cartesian[_E]*cartesian[_E]+cartesian[_F]*cartesian[_F]+cartesian[_H]*cartesian[_H]);polar=self._convertAngleToPositive(polar);return{_L:polar,_I:magnitude*2/32767,_J:magnitude*2/327.67}
-	def readTruePolar(self,declination=float(_D)):polar=self.readPolarCal();polar_true=polar[_L]+declination;polar_true=self._convertAngleToPositive(polar_true);return{'polar_true':polar_true,_I:polar[_I],_J:polar[_J]}
+	def readPolarCal(self):cartesian=self.read();pi=math.pi;polar=math.atan2(cartesian[_E],cartesian[_F])/pi*180.0;magnitude=math.sqrt(cartesian[_E]*cartesian[_E]+cartesian[_F]*cartesian[_F]+cartesian[_H]*cartesian[_H]);polar=self._convertAngleToPositive(polar);return{_K:polar,_I:magnitude*2/32767,_J:magnitude*2/327.67}
+	def readTruePolar(self,declination=float(_D)):polar=self.readPolarCal();polar_true=polar[_K]+declination;polar_true=self._convertAngleToPositive(polar_true);return{'polar_true':polar_true,_I:polar[_I],_J:polar[_J]}
 	def calibrate(self,enable_logging=False):
-		x_min=0;x_max=0;y_min=0;y_max=0;z_min=0;z_max=0;log='';print('[          ]',end='');range=3000;i=0
+		x_min=0;x_max=0;y_min=0;y_max=0;z_min=0;z_max=0;log='';print('If calibrating for X & Y eg the QMC6310 is to be used as a compass, rotate the QMC6310 on a flat surface and keep the unit flat at all times until the bar below is completely populated with stars.  If the QMC6310 is to be used as a three-dimentional magnetometer, rotate in all three dimentions until the bar below is completely populated with stars.');print('[          ]',end='');range=3000;i=0
 		while i<range:
 			i+=1;cartesian=self.read()
 			if cartesian[_A]<x_min:x_min=cartesian[_A];i=0
@@ -97,5 +94,9 @@ class PiicoDev_QMC6310:
 			if i==10*range/10-1:print('\r[**********]')
 			if enable_logging:log=log+(str(cartesian[_A])+','+str(cartesian[_B])+','+str(cartesian[_C])+'\n')
 			sleep_ms(5)
-		x_offset_new=(x_max+x_min)/2;y_offset_new=(y_max+y_min)/2;z_offset_new=(z_max+z_min)/2;f=open(_K,'w');f.write('x_min:\n'+str(x_min)+'\nx_max:\n'+str(x_max)+'\ny_min:\n'+str(y_min)+'\ny_max:\n'+str(y_max)+'\nz_min\n'+str(z_min)+'\nz_max:\n'+str(z_max)+'\nx_offset:\n');f.write(str(x_offset_new)+'\ny_offset:\n'+str(y_offset_new)+'\nz_offset:\n'+str(z_offset_new));f.close();print('x_offset_new: '+str(x_offset_new));print('y_offset_new: '+str(y_offset_new));print('z_offset_new: '+str(z_offset_new))
+		x_offset_new=(x_max+x_min)/2;y_offset_new=(y_max+y_min)/2;z_offset_new=(z_max+z_min)/2;f=open(_L,'w');f.write('x_min:\n'+str(x_min)+'\nx_max:\n'+str(x_max)+'\ny_min:\n'+str(y_min)+'\ny_max:\n'+str(y_max)+'\nz_min\n'+str(z_min)+'\nz_max:\n'+str(z_max)+'\nx_offset:\n');f.write(str(x_offset_new)+'\ny_offset:\n'+str(y_offset_new)+'\nz_offset:\n'+str(z_offset_new));f.close();print('x_offset_new: '+str(x_offset_new));print('y_offset_new: '+str(y_offset_new));print('z_offset_new: '+str(z_offset_new))
 		if enable_logging:flog=open('calibration.log','w');flog.write(log);flog.close
+	def loadCalibration(self):
+		try:f=open(_L,'r');f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline())
+		except:print('Calibration is required.  Please run PiicoDev_QMC6310.calibrate().  Or hit Enter to calibrate now');inputVal=input('Go');print('input:');print(inputVal);sleep_ms(3000)
+		print('X Offset: '+str(self.x_offset));print('Y Offset: '+str(self.y_offset));print('Z Offset: '+str(self.z_offset))
