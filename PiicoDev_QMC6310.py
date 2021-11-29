@@ -64,32 +64,7 @@ class PiicoDev_QMC6310(object):
         self.x_offset = 0
         self.y_offset = 0
         self.z_offset = 0
-        try:
-            f = open("calibration.cal", "r")
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            self.x_offset = float(f.readline())
-            f.readline()
-            self.y_offset = float(f.readline())
-            f.readline()
-            self.z_offset = float(f.readline())
-        except:
-            print("Calibration is required.  Please run PiicoDev_QMC6310.calibrate().")
-            sleep_ms(3000)
-        print('X Offset: ' + str(self.x_offset))
-        print('Y Offset: ' + str(self.y_offset))
-        print('Z Offset: ' + str(self.z_offset))
+        self.loadCalibration()
     
     def _setMode(self, mode):
         self._CR1 = _writeCrumb(self._CR1, _BIT_MODE, mode)
@@ -189,6 +164,7 @@ class PiicoDev_QMC6310(object):
         z_min = 0
         z_max = 0
         log = ''
+        print('If calibrating for X & Y eg the QMC6310 is to be used as a compass, rotate the QMC6310 on a flat surface and keep the unit flat at all times until the bar below is completely populated with stars.  If the QMC6310 is to be used as a three-dimentional magnetometer, rotate in all three dimentions until the bar below is completely populated with stars.')
         print('[          ]', end='')
         range = 3000
         i = 0
@@ -250,3 +226,34 @@ class PiicoDev_QMC6310(object):
             flog = open("calibration.log", "w")
             flog.write(log)
             flog.close
+
+    def loadCalibration(self):
+        try:
+            f = open("calibration.cal", "r")
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            f.readline()
+            self.x_offset = float(f.readline())
+            f.readline()
+            self.y_offset = float(f.readline())
+            f.readline()
+            self.z_offset = float(f.readline())
+        except:
+            print("Calibration is required.  Please run PiicoDev_QMC6310.calibrate().  Or hit Enter to calibrate now")
+            inputVal = input('Go')
+            print('input:')
+            print(inputVal)
+            sleep_ms(3000)
+        print('X Offset: ' + str(self.x_offset))
+        print('Y Offset: ' + str(self.y_offset))
+        print('Z Offset: ' + str(self.z_offset))
