@@ -31,7 +31,7 @@ This module has been tested on:
  - Raspberry Pi SBC
 
 ## Details
-### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C, odr=0, osr1=0, osr2=3, range=3)`
+### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C, odr=0, osr1=0, osr2=3, range=3, cal_filename='calibration.cal')`
 Parameter | Type | Range            | Default                               | Description
 --------- | ---- | ---------------- | ------------------------------------- | --------------------------------------------------
 bus       | int  | 0, 1             | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
@@ -43,6 +43,7 @@ odr       | int  | 0 - 3            | 0                                     | 0:
 osr1      | int  | 0 - 3            | 0                                     | 0: 4, 2: 4, 3: 2, 4: 1
 osr2      | int  | 0 - 3            | 3                                     | 0: 1, 1: 2, 2: 4, 4: 8
 range     | int  | 0 - 3            | 3                                     | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
+cal_filename | string |  | 'calibration.cal' | If more than one magnetometer (for example on seperate I2C buses or if an I2C mux is used), use a different filename for each.
 
 ### `PiicoDev_QMC6310.readMagnitude()`
 Reads the magnetic field magnitude using the calibration generated during the calibration routine if available.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
