@@ -44,6 +44,19 @@ osr1      | int  | 0 - 3            | 0                                     | 0:
 osr2      | int  | 0 - 3            | 3                                     | 0: 1, 1: 2, 2: 4, 4: 8
 range     | int  | 0 - 3            | 3                                     | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
 
+### `PiicoDev_QMC6310.readMagnitude()`
+Reads the magnetic field magnitude using the calibration generated during the calibration routine if available.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
+Parameter   | Type  | Range                    | Description | Unit
+----------- | ----- | ------------------------ | ----------- | ------
+returned    | float | 0.0 to (200.0 to 3000.0) | Magnitude field strength | uT
+
+### `PiicoDev_QMC6310.readHeading(declination=0)`
+Reads the magnetic field bearing from true north.  If no declination is provided the result is a bearing from magnetic north.  Uses the calibration generated during the calibration routine if available.
+Parameter   | Type  | Range        | Description | Unit
+----------- | ----- | ------------ | ----------- | ------
+declination | float | 0.0 - 360.0  | Magnetic declination | deg
+returned    | float | 0.0 to 360.0 | Bearing from true north or magnetic north if no declination is provided | deg
+
 ### `PiicoDev_QMC6310.readTruePolar(declination)`
 Reads the magnetic field magnitude and bearing from true north using calibration offsets and given declination.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
 Parameter   | Type  | Range        | Description | Unit
