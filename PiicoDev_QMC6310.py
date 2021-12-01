@@ -40,7 +40,7 @@ def _writeCrumb(x, n, c):
     return _writeBit(x, n+1, _readBit(c, 1))
 
 class PiicoDev_QMC6310(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=0, osr1=0, osr2=3, range=3):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=0, osr1=0, osr2=3, range=3, cal_filename='calibration.cal'):
         try:
             if compat_ind >= 1:
                 pass
@@ -50,6 +50,8 @@ class PiicoDev_QMC6310(object):
             print(compat_str)
         self.i2c = create_unified_i2c(bus=bus, freq=freq, sda=sda, scl=scl)
         self.addr = addr
+        self.odr = odr
+        self.cal_filename = cal_filename
         self._CR1 = 0x00
         self._CR2 = 0x00
         try:
@@ -156,7 +158,18 @@ class PiicoDev_QMC6310(object):
         polar_true = self._convertAngleToPositive(polar_true)
         return {'polar_true':polar_true, 'Gauss_cal':polar['Gauss_cal'], 'uT_cal':polar['uT_cal']}
     
+    def readMagnitude(self):
+        return self.readTruePolar()['uT_cal']
+    
+    def readHeading(self, declination=0):
+        return self.readTruePolar(declination=declination)['polar_true']
+    
     def calibrate(self, enable_logging=False):
+        try:
+            self.setOutputDataRate(3)
+        except Exception as e:
+            print(i2c_err_str.format(self.addr))
+            raise e
         x_min = 0
         x_max = 0
         y_min = 0
@@ -166,10 +179,11 @@ class PiicoDev_QMC6310(object):
         log = ''
         print('If calibrating for X & Y eg the QMC6310 is to be used as a compass, rotate the QMC6310 on a flat surface and keep the unit flat at all times until the bar below is completely populated with stars.  If the QMC6310 is to be used as a three-dimentional magnetometer, rotate in all three dimentions until the bar below is completely populated with stars.')
         print('[          ]', end='')
-        range = 3000
+        range = 1000
         i = 0
         while i < range:
             i += 1
+            sleep_ms(5)
             cartesian = self.read()
             if cartesian['x'] < x_min:
                 x_min = cartesian['x']
@@ -211,25 +225,23 @@ class PiicoDev_QMC6310(object):
                 print('\015[**********]')
             if enable_logging:
                 log = log + (str(cartesian['x']) + ',' + str(cartesian['y']) + ',' + str(cartesian['z']) + '\n')
-            sleep_ms(5)
+        self.setOutputDataRate(self.odr) # set the output data rate back to the user selected rate
         x_offset_new = (x_max + x_min) / 2
         y_offset_new = (y_max + y_min) / 2
         z_offset_new = (z_max + z_min) / 2
-        f = open("calibration.cal", "w")
+        f = open(self.cal_filename, "w")
         f.write('x_min:\n' + str(x_min) + '\nx_max:\n' + str(x_max) + '\ny_min:\n' + str(y_min) + '\ny_max:\n' + str(y_max) + '\nz_min\n' + str(z_min) + '\nz_max:\n' + str(z_max) + '\nx_offset:\n')
         f.write(str(x_offset_new) + '\ny_offset:\n' + str(y_offset_new) + '\nz_offset:\n' + str(z_offset_new))
         f.close()
-        print('x_offset_new: ' + str(x_offset_new))
-        print('y_offset_new: ' + str(y_offset_new))
-        print('z_offset_new: ' + str(z_offset_new))
         if enable_logging:
             flog = open("calibration.log", "w")
             flog.write(log)
             flog.close
+        self.loadCalibration()
 
     def loadCalibration(self):
         try:
-            f = open("calibration.cal", "r")
+            f = open(self.cal_filename, "r")
             f.readline()
             f.readline()
             f.readline()
@@ -249,10 +261,7 @@ class PiicoDev_QMC6310(object):
             f.readline()
             self.z_offset = float(f.readline())
         except:
-            print("Calibration is required.  Please run PiicoDev_QMC6310.calibrate().  Or hit Enter to calibrate now")
-            inputVal = input('Go')
-            print('input:')
-            print(inputVal)
+            print("Calibration is required.  Please run calibrate().  Visit piico.dev/p15 for more info.")
             sleep_ms(3000)
         print('X Offset: ' + str(self.x_offset))
         print('Y Offset: ' + str(self.y_offset))
