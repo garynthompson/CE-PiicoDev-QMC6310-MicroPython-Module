@@ -2,7 +2,7 @@
 # Peter Johnston, Core Electronics
 
 import math
-import ustruct
+# import ustruct
 from PiicoDev_Unified import *
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
@@ -40,7 +40,7 @@ def _writeCrumb(x, n, c):
     return _writeBit(x, n+1, _readBit(c, 1))
 
 class PiicoDev_QMC6310(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=0, osr1=0, osr2=3, range=3, cal_filename='calibration.cal'):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=3, osr1=0, osr2=3, range=3, cal_filename='calibration.cal'):
         try:
             if compat_ind >= 1:
                 pass
@@ -177,7 +177,7 @@ class PiicoDev_QMC6310(object):
         z_min = 0
         z_max = 0
         log = ''
-        print('If calibrating for X & Y eg the QMC6310 is to be used as a compass, rotate the QMC6310 on a flat surface and keep the unit flat at all times until the bar below is completely populated with stars.  If the QMC6310 is to be used as a three-dimentional magnetometer, rotate in all three dimentions until the bar below is completely populated with stars.')
+        print('*** Calibrating.\n    Slowly rotate your sensor until the bar is full')
         print('[          ]', end='')
         range = 1000
         i = 0
@@ -242,27 +242,15 @@ class PiicoDev_QMC6310(object):
     def loadCalibration(self):
         try:
             f = open(self.cal_filename, "r")
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
-            f.readline()
+            for i in range(13): f.readline()
             self.x_offset = float(f.readline())
             f.readline()
             self.y_offset = float(f.readline())
             f.readline()
             self.z_offset = float(f.readline())
         except:
-            print("Calibration is required.  Please run calibrate().  Visit piico.dev/p15 for more info.")
-            sleep_ms(3000)
-        print('X Offset: ' + str(self.x_offset))
-        print('Y Offset: ' + str(self.y_offset))
-        print('Z Offset: ' + str(self.z_offset))
+            print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.")
+#             sleep_ms(3000)
+#         print('X Offset: ' + str(self.x_offset))
+#         print('Y Offset: ' + str(self.y_offset))
+#         print('Z Offset: ' + str(self.z_offset))
