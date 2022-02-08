@@ -10,7 +10,7 @@ _D='NaN'
 _C='z'
 _B='y'
 _A='x'
-import math,ustruct
+import math
 from PiicoDev_Unified import *
 compat_str='\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 _I2C_ADDRESS=28
@@ -33,7 +33,7 @@ def _writeBit(x,n,b):
 	else:return _setBit(x,n)
 def _writeCrumb(x,n,c):x=_writeBit(x,n,_readBit(c,0));return _writeBit(x,n+1,_readBit(c,1))
 class PiicoDev_QMC6310:
-	def __init__(self,bus=_G,freq=_G,sda=_G,scl=_G,addr=_I2C_ADDRESS,odr=0,osr1=0,osr2=3,range=3,cal_filename='calibration.cal'):
+	def __init__(self,bus=_G,freq=_G,sda=_G,scl=_G,addr=_I2C_ADDRESS,odr=3,osr1=0,osr2=3,range=3,cal_filename='calibration.cal'):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
@@ -77,7 +77,7 @@ class PiicoDev_QMC6310:
 	def calibrate(self,enable_logging=False):
 		try:self.setOutputDataRate(3)
 		except Exception as e:print(i2c_err_str.format(self.addr));raise e
-		x_min=0;x_max=0;y_min=0;y_max=0;z_min=0;z_max=0;log='';print('If calibrating for X & Y eg the QMC6310 is to be used as a compass, rotate the QMC6310 on a flat surface and keep the unit flat at all times until the bar below is completely populated with stars.  If the QMC6310 is to be used as a three-dimentional magnetometer, rotate in all three dimentions until the bar below is completely populated with stars.');print('[          ]',end='');range=1000;i=0
+		x_min=0;x_max=0;y_min=0;y_max=0;z_min=0;z_max=0;log='';print('*** Calibrating.\n    Slowly rotate your sensor until the bar is full');print('[          ]',end='');range=1000;i=0
 		while i<range:
 			i+=1;sleep_ms(5);cartesian=self.read()
 			if cartesian[_A]<x_min:x_min=cartesian[_A];i=0
@@ -101,6 +101,8 @@ class PiicoDev_QMC6310:
 		if enable_logging:flog=open('calibration.log','w');flog.write(log);flog.close
 		self.loadCalibration()
 	def loadCalibration(self):
-		try:f=open(self.cal_filename,'r');f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();f.readline();self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline())
-		except:print('Calibration is required.  Please run calibrate().  Visit piico.dev/p15 for more info.');sleep_ms(3000)
-		print('X Offset: '+str(self.x_offset));print('Y Offset: '+str(self.y_offset));print('Z Offset: '+str(self.z_offset))
+		try:
+			f=open(self.cal_filename,'r')
+			for i in range(13):f.readline()
+			self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline())
+		except:print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.")
