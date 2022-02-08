@@ -1,13 +1,13 @@
-# https://forum.micropython.org/viewtopic.php?t=3658
-# Peter Johnston, Core Electronics
+# Class and methods for the QMC6310 3-axis magnetometer.
+# Written by Peter Johnston and Michael Ruppe at Core Electronics
 
 import math
-# import ustruct
 from PiicoDev_Unified import *
 
 compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
 
 _I2C_ADDRESS = 0x1C
+# Registers
 _ADDRESS_XOUT = 0x01
 _ADDRESS_YOUT = 0x03
 _ADDRESS_ZOUT = 0x05
@@ -40,7 +40,9 @@ def _writeCrumb(x, n, c):
     return _writeBit(x, n+1, _readBit(c, 1))
 
 class PiicoDev_QMC6310(object):
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=3, osr1=0, osr2=3, range=3, cal_filename='calibration.cal'):
+    range_gauss = {3000:1e-3, 1200:4e-4, 800:2.6666667e-4, 200:6.6666667e-5} # Maps the range (key) to sensitivity (lsb/gauss)
+    range_microtesla = {3000:1e-1, 1200:4e-2, 800:2.6666667e-2, 200:6.6666667e-3} # Maps the range (key) to sensitivity (lsb/microtesla)
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=3, osr1=0, osr2=3, range=200, calibrationFile='calibration.cal'):
         try:
             if compat_ind >= 1:
                 pass
@@ -51,7 +53,7 @@ class PiicoDev_QMC6310(object):
         self.i2c = create_unified_i2c(bus=bus, freq=freq, sda=sda, scl=scl)
         self.addr = addr
         self.odr = odr
-        self.cal_filename = cal_filename
+        self.calibrationFile = calibrationFile
         self._CR1 = 0x00
         self._CR2 = 0x00
         try:
@@ -66,6 +68,7 @@ class PiicoDev_QMC6310(object):
         self.x_offset = 0
         self.y_offset = 0
         self.z_offset = 0
+        self.declination = 0
         self.loadCalibration()
     
     def _setMode(self, mode):
@@ -85,7 +88,10 @@ class PiicoDev_QMC6310(object):
         self.i2c.writeto_mem(self.addr, _ADDRESS_CONTROL1, bytes([self._CR1]))
 
     def setRange(self, range):
-        self._CR2 = _writeCrumb(self._CR2, _BIT_RANGE, range)
+        assert range in [3000,1200,800,200], "range must be 200,800,1200,3000 (uTesla)"
+        r={3000:0, 1200:1, 800:2, 200:3}
+        self.sensitivity=self.range_microtesla[range]
+        self._CR2 = _writeCrumb(self._CR2, _BIT_RANGE, r[range])
         self.i2c.writeto_mem(self.addr, _ADDRESS_CONTROL2, bytes([self._CR2]))
 
     def _convertAngleToPositive(self, angle):
@@ -105,7 +111,7 @@ class PiicoDev_QMC6310(object):
         return _readBit(status, 1)
     
     def read(self):
-        NaN = {'x':float('NaN'),'y':float('NaN'),'z':float('NaN'),'x_cal':float('NaN'),'y_cal':float('NaN'),'z_cal':float('NaN')}
+        NaN = {'x':float('NaN'),'y':float('NaN'),'z':float('NaN')}
         try:
             status = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_STATUS, 1), '')
         except:
@@ -124,14 +130,14 @@ class PiicoDev_QMC6310(object):
                 return NaN
             if (x >= 0x8000):
                 x = -((65535 - x) + 1)
-            x_cal = x - self.x_offset
+            x = (x - self.x_offset) * self.sensitivity
             if (y >= 0x8000):
                 y = -((65535 - y) + 1)
-            y_cal = y - self.y_offset
+            y = (y - self.y_offset) * self.sensitivity
             if (z >= 0x8000):
                 z = -((65535 - z) + 1)
-            z_cal = z - self.z_offset
-            return {'x':x,'y':y,'z':z,'x_cal':x_cal,'y_cal':y_cal,'z_cal':z_cal}
+            z = (z - self.z_offset) * self.sensitivity
+            return {'x':x,'y':y,'z':z}
         else:
             print('Not Ready')
             return NaN
@@ -139,30 +145,19 @@ class PiicoDev_QMC6310(object):
     def readPolar(self):
         cartesian = self.read()
         pi = math.pi
-        polar = (math.atan2(cartesian['x'],cartesian['y'])/pi)*180.0
+        angle = (math.atan2(cartesian['x'],cartesian['y'])/pi)*180.0 + self.declination
+        angle = self._convertAngleToPositive(angle)
         magnitude = math.sqrt(cartesian['x']*cartesian['x'] + cartesian['y']*cartesian['y'] + cartesian['z']*cartesian['z'])
-        polar = self._convertAngleToPositive(polar)
-        return {'polar':polar, 'Gauss':magnitude*2/32767, 'uT':magnitude*2/327.67}
-    
-    def readPolarCal(self):
-        cartesian = self.read()
-        pi = math.pi
-        polar = (math.atan2(cartesian['x_cal'],cartesian['y_cal'])/pi)*180.0
-        magnitude = math.sqrt(cartesian['x_cal']*cartesian['x_cal'] + cartesian['y_cal']*cartesian['y_cal'] + cartesian['z_cal']*cartesian['z_cal'])
-        polar = self._convertAngleToPositive(polar)
-        return {'polar_cal':polar, 'Gauss_cal':magnitude*2/32767, 'uT_cal':magnitude*2/327.67}
-    
-    def readTruePolar(self, declination=float('NaN')):
-        polar = self.readPolarCal()
-        polar_true = polar['polar_cal'] + declination
-        polar_true = self._convertAngleToPositive(polar_true)
-        return {'polar_true':polar_true, 'Gauss_cal':polar['Gauss_cal'], 'uT_cal':polar['uT_cal']}
+        return {'polar':angle, 'Gauss':magnitude*100, 'uT':magnitude}
     
     def readMagnitude(self):
-        return self.readTruePolar()['uT_cal']
+        return self.readPolar()['uT']
     
-    def readHeading(self, declination=0):
-        return self.readTruePolar(declination=declination)['polar_true']
+    def readHeading(self):
+        return self.readPolar()['polar']
+    
+    def setDeclination(self, dec):
+        self.declination = dec
     
     def calibrate(self, enable_logging=False):
         try:
@@ -226,22 +221,21 @@ class PiicoDev_QMC6310(object):
             if enable_logging:
                 log = log + (str(cartesian['x']) + ',' + str(cartesian['y']) + ',' + str(cartesian['z']) + '\n')
         self.setOutputDataRate(self.odr) # set the output data rate back to the user selected rate
-        x_offset_new = (x_max + x_min) / 2
-        y_offset_new = (y_max + y_min) / 2
-        z_offset_new = (z_max + z_min) / 2
-        f = open(self.cal_filename, "w")
+        self.x_offset = (x_max + x_min) / 2
+        self.y_offset = (y_max + y_min) / 2
+        self.z_offset = (z_max + z_min) / 2
+        f = open(self.calibrationFile, "w")
         f.write('x_min:\n' + str(x_min) + '\nx_max:\n' + str(x_max) + '\ny_min:\n' + str(y_min) + '\ny_max:\n' + str(y_max) + '\nz_min\n' + str(z_min) + '\nz_max:\n' + str(z_max) + '\nx_offset:\n')
-        f.write(str(x_offset_new) + '\ny_offset:\n' + str(y_offset_new) + '\nz_offset:\n' + str(z_offset_new))
+        f.write(str(self.x_offset) + '\ny_offset:\n' + str(self.y_offset) + '\nz_offset:\n' + str(self.z_offset))
         f.close()
         if enable_logging:
             flog = open("calibration.log", "w")
             flog.write(log)
             flog.close
-        self.loadCalibration()
 
     def loadCalibration(self):
         try:
-            f = open(self.cal_filename, "r")
+            f = open(self.calibrationFile, "r")
             for i in range(13): f.readline()
             self.x_offset = float(f.readline())
             f.readline()
@@ -250,7 +244,4 @@ class PiicoDev_QMC6310(object):
             self.z_offset = float(f.readline())
         except:
             print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.")
-#             sleep_ms(3000)
-#         print('X Offset: ' + str(self.x_offset))
-#         print('Y Offset: ' + str(self.y_offset))
-#         print('Z Offset: ' + str(self.z_offset))
+            sleep_ms(1000)
