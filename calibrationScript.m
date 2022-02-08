@@ -1,3 +1,6 @@
+% Design verification of hard-iron calibration
+% Brenton Schulz, Core Electronics 2021
+
 clear all
 data = dlmread("calibration.log");
 data = data(1:1000,:)
