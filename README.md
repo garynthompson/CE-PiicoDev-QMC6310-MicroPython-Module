@@ -42,7 +42,7 @@ addr      | int  | 0x1C             | 0x1C                                  | Th
 odr       | int  | 0 - 3            | 0                                     | 0: 10Hz, 1: 50Hz, 2: 100Hz, 3: 200Hz
 osr1      | int  | 0 - 3            | 0                                     | 0: 4, 2: 4, 3: 2, 4: 1
 osr2      | int  | 0 - 3            | 3                                     | 0: 1, 1: 2, 2: 4, 4: 8
-range     | int  | 0 - 3            | 3                                     | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
+range     | int  | 200, 800, 1200, 3000 microTesla            | 200                                   | Range. Larger ranges are less sensitive.
 cal_filename | string |  | 'calibration.cal' | If more than one magnetometer (for example on seperate I2C buses or if an I2C mux is used), use a different filename for each.
 
 ### `PiicoDev_QMC6310.readMagnitude()`
@@ -51,31 +51,11 @@ Parameter   | Type  | Range                    | Description | Unit
 ----------- | ----- | ------------------------ | ----------- | ------
 returned    | float | 0.0 to (200.0 to 3000.0) | Magnitude field strength | uT
 
-### `PiicoDev_QMC6310.readHeading(declination=0)`
+### `PiicoDev_QMC6310.readHeading()`
 Reads the magnetic field bearing from true north.  If no declination is provided the result is a bearing from magnetic north.  Uses the calibration generated during the calibration routine if available.
 Parameter   | Type  | Range        | Description | Unit
 ----------- | ----- | ------------ | ----------- | ------
-declination | float | 0.0 - 360.0  | Magnetic declination | deg
-returned    | float | 0.0 to 360.0 | Bearing from true north or magnetic north if no declination is provided | deg
-
-### `PiicoDev_QMC6310.readTruePolar(declination)`
-Reads the magnetic field magnitude and bearing from true north using calibration offsets and given declination.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
-Parameter   | Type  | Range        | Description | Unit
------------ | ----- | ------------ | ----------- | ------
-declination | float | 0.0 - 360.0  | Magnetic declination | deg
-**Returns** | **Dictionary**
-polar_true  | float | 0.0 to 360.0 | Bearing from true north | deg
-Gauss_cal   | float | 0.0 to (2.0 to 30.0)     | Magnetic field strength | Gauss
-uT_cal      | float | 0.0 to (200.0 to 3000.0) | Magnitude field strength | uT
-
-### `PiicoDev_QMC6310.readPolarCal()`
-Reads the magnetic field magnitude and bearing from magnetic north using calibration offsets.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
-Parameter   | Type  | Range                    | Description | Unit
------------ | ----- | ------------------------ | ----------- | ----
-**Returns** | **Dictionary**
-polar_cal   | float | 0.0 to 360.0             | Calibrated bearing from magnetic north| deg
-Gauss_cal   | float | 0.0 to (2.0 to 30.0)     | Magnetic field strength | Gauss
-uT_cal      | float | 0.0 to (200.0 to 3000.0) | Magnitude field strength | uT
+returned    | float | 0.0 to 360.0 | Bearing from true north or magnetic north if no declination is set | deg
 
 ### `PiicoDev_QMC6310.readPolar()`
 Reads the raw magnetic field magnitude and angle (degrees) in the X and Y plane.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
@@ -91,12 +71,9 @@ Reads the X, Y and Z components of the magnetic field.
 Parameter   | Type | Range           | Description
 ----------- | ---- | --------------- | -----------
 **Returns** | **Dictionary**
-x           | int  | -32768 to 32767 | X magnetic field component
-y           | int  | -32768 to 32767 | Y magnetic field component
-z           | int  | -32768 to 32767 | Z magnetic field component
-x_cal       | int  | -32768 to 32767 | X magnetic field component using calibration offsets
-y_cal       | int  | -32768 to 32767 | Y magnetic field component using calibration offsets
-z_cal       | int  | -32768 to 32767 | Z magnetic field component using calibration offsets
+x           | float  | 0.0 to (200.0 to 3000.0 | X magnetic field component
+y           | float  | 0.0 to (200.0 to 3000.0 | Y magnetic field component
+z           | float  | 0.0 to (200.0 to 3000.0 | Z magnetic field component
 
 ### `PiicoDev_QMC6310.calibrate()`
 Routine to calibrate the magnetometer.  Rotate the magnetometer in the X and Y or X, Y, & Z directions until the routine is complete.
@@ -123,7 +100,7 @@ osr2      | int  | 0 to 3 | 0: 1, 1: 2, 2: 4, 4: 8
 Sets the Range.
 Parameter | Type | Range  | Description
 --------- | ---- | ------ | -----------
-range     | int  | 0 to 3 | 0: 30Gauss, 1: 12Gauss, 2: 8Gauss, 3: 2Gauss
+range     | int  | 200, 800, 1200, 3000 | Set the maximum range in microtesla. 
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
