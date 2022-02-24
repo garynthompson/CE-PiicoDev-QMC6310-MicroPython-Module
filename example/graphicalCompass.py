@@ -5,7 +5,7 @@ from PiicoDev_SSD1306 import create_PiicoDev_SSD1306, WIDTH, HEIGHT
 from PiicoDev_Unified import sleep_ms
 from math import sin, cos, radians # for calculating the compass-needle co-ordinates
 
-compass = PiicoDev_QMC6310(range=200) # Initialise the sensor with the most sensitive range. Valid ranges: 200, 800, 1200, 3000 uT
+compass = PiicoDev_QMC6310(range=1200) # Initialise the sensor with the most sensitive range. Valid ranges: 200, 800, 1200, 3000 uT
 oled = create_PiicoDev_SSD1306()
 # compass.calibrate() # only need to calibrate once
 
@@ -32,6 +32,7 @@ def drawCompass(heading):
 while True:
     heading = compass.readHeading()
     print(heading)
-    drawCompass(heading)
+    if compass.dataValid(): # only draw for valid data - prevents errors
+        drawCompass(heading)
     
     sleep_ms(100)
