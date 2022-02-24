@@ -1,3 +1,4 @@
+_E=False
 _D=None
 _C='z'
 _B='y'
@@ -26,7 +27,7 @@ def _writeBit(x,n,b):
 def _writeCrumb(x,n,c):x=_writeBit(x,n,_readBit(c,0));return _writeBit(x,n+1,_readBit(c,1))
 class PiicoDev_QMC6310:
 	range_gauss={3000:0.001,1200:0.0004,800:0.00026666667,200:6.6666667e-05};range_microtesla={3000:0.1,1200:0.04,800:0.026666667,200:0.0066666667}
-	def __init__(self,bus=_D,freq=_D,sda=_D,scl=_D,addr=_I2C_ADDRESS,odr=3,osr1=0,osr2=3,range=200,calibrationFile='calibration.cal'):
+	def __init__(self,bus=_D,freq=_D,sda=_D,scl=_D,addr=_I2C_ADDRESS,odr=3,osr1=0,osr2=3,range=3000,calibrationFile='calibration.cal'):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
@@ -34,7 +35,7 @@ class PiicoDev_QMC6310:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self.odr=odr;self.calibrationFile=calibrationFile;self._CR1=0;self._CR2=0
 		try:self._setMode(1);self.setOutputDataRate(odr);self.setOverSamplingRatio(osr1);self.setOverSamplingRate(osr2);self.setRange(range)
 		except Exception as e:print(i2c_err_str.format(self.addr));raise e
-		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.declination=0;self.loadCalibration()
+		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.declination=0;self.data={};self._dataValid=_E;self.loadCalibration()
 	def _setMode(self,mode):self._CR1=_writeCrumb(self._CR1,_BIT_MODE,mode);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOutputDataRate(self,odr):self._CR1=_writeCrumb(self._CR1,_BIT_ODR,odr);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOverSamplingRatio(self,osr1):self._CR1=_writeCrumb(self._CR1,_BIT_OSR1,osr1);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
@@ -48,25 +49,26 @@ class PiicoDev_QMC6310:
 	def _getStatusReady(self,status):return _readBit(status,0)
 	def _getStatusOverflow(self,status):return _readBit(status,1)
 	def read(self):
-		B='little';A='NaN';NaN={_A:float(A),_B:float(A),_C:float(A)}
+		C='little';B=True;A='NaN';self._dataValid=_E;NaN={_A:float(A),_B:float(A),_C:float(A)}
 		try:status=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_STATUS,1),'')
-		except:print(i2c_err_str.format(self.addr));return NaN
-		if self._getStatusReady(status)is True:
-			try:x=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_XOUT,2),B);y=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_YOUT,2),B);z=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_ZOUT,2),B)
-			except:print(i2c_err_str.format(self.addr));return NaN
-			if self._getStatusOverflow(status)is True:print('Overflow');return NaN
+		except:print(i2c_err_str.format(self.addr));self.sample=NaN;return NaN
+		if self._getStatusReady(status)is B:
+			try:x=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_XOUT,2),C);y=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_YOUT,2),C);z=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_ZOUT,2),C)
+			except:print(i2c_err_str.format(self.addr));self.sample=NaN;return self.sample
+			if self._getStatusOverflow(status)is B:return NaN
 			if x>=32768:x=-(65535-x+1)
 			x=(x-self.x_offset)*self.sensitivity
 			if y>=32768:y=-(65535-y+1)
 			y=(y-self.y_offset)*self.sensitivity
 			if z>=32768:z=-(65535-z+1)
-			z=(z-self.z_offset)*self.sensitivity;return{_A:x,_B:y,_C:z}
-		else:print('Not Ready');return NaN
+			z=(z-self.z_offset)*self.sensitivity;self.sample={_A:x,_B:y,_C:z};self._dataValid=B;return self.sample
+		else:print('Not Ready');self.sample=NaN;return self.sample
+	def dataValid(self):return self._dataValid
 	def readPolar(self):cartesian=self.read();pi=math.pi;angle=math.atan2(cartesian[_A],cartesian[_B])/pi*180.0+self.declination;angle=self._convertAngleToPositive(angle);magnitude=math.sqrt(cartesian[_A]*cartesian[_A]+cartesian[_B]*cartesian[_B]+cartesian[_C]*cartesian[_C]);return{'polar':angle,'Gauss':magnitude*100,'uT':magnitude}
 	def readMagnitude(self):return self.readPolar()['uT']
 	def readHeading(self):return self.readPolar()['polar']
 	def setDeclination(self,dec):self.declination=dec
-	def calibrate(self,enable_logging=False):
+	def calibrate(self,enable_logging=_E):
 		try:self.setOutputDataRate(3)
 		except Exception as e:print(i2c_err_str.format(self.addr));raise e
 		x_min=0;x_max=0;y_min=0;y_max=0;z_min=0;z_max=0;log='';print('*** Calibrating.\n    Slowly rotate your sensor until the bar is full');print('[          ]',end='');range=1000;i=0
