@@ -8,7 +8,7 @@ compass = PiicoDev_QMC6310(range=200) # Initialise the sensor with the most sens
 
 compass.calibrate() # only need to calibrate once
 
-# Declination is the difference between magnetic-north and true-north ("heading")
+# Declination is the difference between magnetic-north and true-north ("heading") and depends on location
 compass.setDeclination(12.5) # Found with: https://www.magnetic-declination.com/Australia/Newcastle/122944.html
 
 while True:
