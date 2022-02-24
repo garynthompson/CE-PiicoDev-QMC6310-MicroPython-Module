@@ -42,7 +42,7 @@ def _writeCrumb(x, n, c):
 class PiicoDev_QMC6310(object):
     range_gauss = {3000:1e-3, 1200:4e-4, 800:2.6666667e-4, 200:6.6666667e-5} # Maps the range (key) to sensitivity (lsb/gauss)
     range_microtesla = {3000:1e-1, 1200:4e-2, 800:2.6666667e-2, 200:6.6666667e-3} # Maps the range (key) to sensitivity (lsb/microtesla)
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=3, osr1=0, osr2=3, range=200, calibrationFile='calibration.cal'):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=3, osr1=0, osr2=3, range=3000, calibrationFile='calibration.cal'):
         try:
             if compat_ind >= 1:
                 pass
@@ -69,6 +69,8 @@ class PiicoDev_QMC6310(object):
         self.y_offset = 0
         self.z_offset = 0
         self.declination = 0
+        self.data = {}
+        self._dataValid = False
         self.loadCalibration()
     
     def _setMode(self, mode):
@@ -111,11 +113,13 @@ class PiicoDev_QMC6310(object):
         return _readBit(status, 1)
     
     def read(self):
+        self._dataValid = False
         NaN = {'x':float('NaN'),'y':float('NaN'),'z':float('NaN')}
         try:
             status = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_STATUS, 1), '')
         except:
             print(i2c_err_str.format(self.addr))
+            self.sample = NaN
             return NaN
         if self._getStatusReady(status) is True:
             try:
@@ -124,9 +128,10 @@ class PiicoDev_QMC6310(object):
                 z = int.from_bytes(self.i2c.readfrom_mem(self.addr, _ADDRESS_ZOUT, 2), 'little')
             except:
                 print(i2c_err_str.format(self.addr))
-                return NaN
+                self.sample = NaN
+                return self.sample
             if self._getStatusOverflow(status) is True:
-                print('Overflow')
+#                 print('Overflow')
                 return NaN
             if (x >= 0x8000):
                 x = -((65535 - x) + 1)
@@ -137,10 +142,16 @@ class PiicoDev_QMC6310(object):
             if (z >= 0x8000):
                 z = -((65535 - z) + 1)
             z = (z - self.z_offset) * self.sensitivity
-            return {'x':x,'y':y,'z':z}
+            self.sample = {'x':x,'y':y,'z':z}
+            self._dataValid = True
+            return self.sample
         else:
             print('Not Ready')
-            return NaN
+            self.sample = NaN
+            return self.sample
+    
+    def dataValid(self):
+        return self._dataValid
     
     def readPolar(self):
         cartesian = self.read()
