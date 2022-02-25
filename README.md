@@ -1,23 +1,13 @@
-<!-- TODO How to use this template
-Follow these commented instructions to build the repo.
-Delete the instructions as you go, to keep for a cleaner final file.
- -->
+# PiicoDev® Magnetometer QMC6310 MicroPython Module
 
-<!-- TODO update title to be descriptive. Eg.
-PiicoDev® [Description] [Part#] MicroPython Module
-PiicoDev® Precision Temperature Sensor TMP117 MicroPython Module -->
-# PiicoDev® Template MicroPython Module
-
-<!-- TODO update link URL with CE SKU -->
-<!-- TODO update link title -->
 This is the firmware repo for the [Core Electronics PiicoDev® Magnetometer QMC6310](https://core-electronics.com.au/catalog/product/view/sku/CE07937)
 
 This module depends on the [PiicoDev Unified Library](https://github.com/CoreElectronics/CE-PiicoDev-Unified), include `PiicoDev_Unified.py` in the project directory on your MicroPython device.
 
-See the [Quickstart Guide](https://piico.dev/p15)
+See the [Quickstart Guides](https://piico.dev/p15)
 
 ## Details
-### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C, odr=0, osr1=0, osr2=3, range=3, cal_filename='calibration.cal')`
+### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C, odr=0, osr1=0, osr2=3, range=3000, cal_filename='calibration.cal')`
 Parameter | Type | Range            | Default                               | Description
 --------- | ---- | ---------------- | ------------------------------------- | --------------------------------------------------
 bus       | int  | 0, 1             | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
@@ -86,7 +76,7 @@ osr2      | int  | 0 to 3 | 0: 1, 1: 2, 2: 4, 4: 8
 Sets the Range.
 Parameter | Type | Range  | Description
 --------- | ---- | ------ | -----------
-range     | int  | 200, 800, 1200, 3000 | Set the maximum range in microtesla. 
+range     | int  | 200, 800, 1200, 3000 | Set the maximum range in microtesla.
 
 # License
 This project is open source - please review the LICENSE.md file for further licensing information.
