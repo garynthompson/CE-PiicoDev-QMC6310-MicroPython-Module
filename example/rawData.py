@@ -3,7 +3,8 @@
 from PiicoDev_QMC6310 import PiicoDev_QMC6310
 from PiicoDev_Unified import sleep_ms
 
-magSensor = PiicoDev_QMC6310() # Initialise the sensor
+magSensor = PiicoDev_QMC6310() # Initialise the sensor (defaults to range=3000uT)
+magSensor.setRange(1200)
 
 while True:
     raw_data = magSensor.read() # Read the field strength on each axis
