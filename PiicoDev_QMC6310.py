@@ -112,7 +112,7 @@ class PiicoDev_QMC6310(object):
     def _getStatusOverflow(self, status):
         return _readBit(status, 1)
     
-    def read(self):
+    def read(self, raw=False):
         self._dataValid = False
         NaN = {'x':float('NaN'),'y':float('NaN'),'z':float('NaN')}
         try:
@@ -135,13 +135,17 @@ class PiicoDev_QMC6310(object):
                 return NaN
             if (x >= 0x8000):
                 x = -((65535 - x) + 1)
-            x = (x - self.x_offset) * self.sensitivity
+            x = (x - self.x_offset)
             if (y >= 0x8000):
                 y = -((65535 - y) + 1)
-            y = (y - self.y_offset) * self.sensitivity
+            y = (y - self.y_offset)
             if (z >= 0x8000):
                 z = -((65535 - z) + 1)
-            z = (z - self.z_offset) * self.sensitivity
+            z = (z - self.z_offset)
+            if raw is False:
+                x *= self.sensitivity
+                y *= self.sensitivity
+                z *= self.sensitivity
             self.sample = {'x':x,'y':y,'z':z}
             self._dataValid = True
             return self.sample
@@ -155,8 +159,7 @@ class PiicoDev_QMC6310(object):
     
     def readPolar(self):
         cartesian = self.read()
-        pi = math.pi
-        angle = (math.atan2(cartesian['x'],cartesian['y'])/pi)*180.0 + self.declination
+        angle = ( math.atan2(cartesian['x'],cartesian['y']) /math.pi)*180.0 + self.declination
         angle = self._convertAngleToPositive(angle)
         magnitude = math.sqrt(cartesian['x']*cartesian['x'] + cartesian['y']*cartesian['y'] + cartesian['z']*cartesian['z'])
         return {'polar':angle, 'Gauss':magnitude*100, 'uT':magnitude}
@@ -176,59 +179,34 @@ class PiicoDev_QMC6310(object):
         except Exception as e:
             print(i2c_err_str.format(self.addr))
             raise e
-        x_min = 0
-        x_max = 0
-        y_min = 0
-        y_max = 0
-        z_min = 0
-        z_max = 0
+        x_min = 65535
+        x_max = -65535
+        y_min = 65535
+        y_max = -65535
+        z_min = 65535
+        z_max = -65535
         log = ''
         print('*** Calibrating.\n    Slowly rotate your sensor until the bar is full')
         print('[          ]', end='')
         range = 1000
         i = 0
+        x=0;y=0;z=0;
+        a=0.5 # EMA filter weight
         while i < range:
             i += 1
             sleep_ms(5)
-            cartesian = self.read()
-            if cartesian['x'] < x_min:
-                x_min = cartesian['x']
-                i = 0
-            if cartesian['x'] > x_max:
-                x_max = cartesian['x']
-                i = 0
-            if cartesian['y'] < y_min:
-                y_min = cartesian['y']
-                i = 0
-            if cartesian['y'] > y_max:
-                y_max = cartesian['y']
-                i = 0
-            if cartesian['z'] < z_min:
-                z_min = cartesian['z']
-                i = 0
-            if cartesian['z'] > z_max:
-                z_max = cartesian['z']
-                i = 0
-            if i == range/10:
-                print('\015[*         ]', end='')
-            if i == 2*range/10:
-                print('\015[**        ]', end='')
-            if i == 3*range/10:
-                print('\015[***       ]', end='')
-            if i == 4*range/10:
-                print('\015[****      ]', end='')
-            if i == 5*range/10:
-                print('\015[*****     ]', end='')
-            if i == 6*range/10:
-                print('\015[******    ]', end='')
-            if i == 7*range/10:
-                print('\015[*******   ]', end='')
-            if i == 8*range/10:
-                print('\015[********  ]', end='')
-            if i == 9*range/10:
-                print('\015[********* ]', end='')
-            if i == 10*range/10-1:
-                print('\015[**********]')
+            d = self.read(raw=True)
+            x = a*d['x'] + (1-a)*x # EMA filter
+            y = a*d['y'] + (1-a)*y
+            z = a*d['z'] + (1-a)*z
+            if x < x_min: x_min = x; i=0
+            if x > x_max: x_max = x; i=0
+            if y < y_min: y_min = y; i=0
+            if y > y_max: y_max = y; i=0
+            if z < z_min: z_min = z; i=0
+            if z > z_max: z_max = z; i=0
+            j = round(10*i/range);
+            print( '\015[' + int(j)*'*' + int(10-j)*' ' + ']', end='') # print a progress bar
             if enable_logging:
                 log = log + (str(cartesian['x']) + ',' + str(cartesian['y']) + ',' + str(cartesian['z']) + '\n')
         self.setOutputDataRate(self.odr) # set the output data rate back to the user selected rate
