@@ -4,6 +4,7 @@ from PiicoDev_QMC6310 import PiicoDev_QMC6310
 from PiicoDev_Unified import sleep_ms
 
 magSensor = PiicoDev_QMC6310(range=3000) # initialise the magnetometer
+# magSensor.calibrate()
 
 threshold = 80 # microTesla or 'uT'.
 
