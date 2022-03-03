@@ -50,7 +50,7 @@ class PiicoDev_QMC6310:
 	def _getStatusOverflow(self,status):return _readBit(status,1)
 	def read(self,raw=_C):
 		B='little';A='NaN';self._dataValid=_C;NaN={_A:float(A),_B:float(A),'z':float(A)}
-		try:status=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_STATUS,1),'')
+		try:status=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_STATUS,1),'big')
 		except:print(i2c_err_str.format(self.addr));self.sample=NaN;return NaN
 		if self._getStatusReady(status)is _E:
 			try:x=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_XOUT,2),B);y=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_YOUT,2),B);z=int.from_bytes(self.i2c.readfrom_mem(self.addr,_ADDRESS_ZOUT,2),B)
