@@ -8,6 +8,6 @@ magSensor.setRange(1200)
 
 while True:
     raw_data = magSensor.read() # Read the field strength on each axis in uT
-    raw_data = magSensor.read(raw=True) # Read the raw, unscaled data on each axis
+#    raw_data = magSensor.read(raw=True) # Read the raw, unscaled data on each axis
     print(raw_data)             # Print the data
     sleep_ms(200)
