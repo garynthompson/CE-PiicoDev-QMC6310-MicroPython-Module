@@ -35,7 +35,7 @@ class PiicoDev_QMC6310:
 		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self.odr=odr;self.calibrationFile=calibrationFile;self._CR1=0;self._CR2=0
 		try:self._setMode(1);self.setOutputDataRate(odr);self.setOverSamplingRatio(osr1);self.setOverSamplingRate(osr2);self.setRange(range)
 		except Exception as e:print(i2c_err_str.format(self.addr));raise e
-		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.declination=0;self.data={};self._dataValid=_C;self.loadCalibration()
+		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.declination=0;self.data={};self._dataValid=_C;self.loadCalibration();sleep_ms(5)
 	def _setMode(self,mode):self._CR1=_writeCrumb(self._CR1,_BIT_MODE,mode);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOutputDataRate(self,odr):self._CR1=_writeCrumb(self._CR1,_BIT_ODR,odr);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOverSamplingRatio(self,osr1):self._CR1=_writeCrumb(self._CR1,_BIT_OSR1,osr1);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
@@ -90,5 +90,5 @@ class PiicoDev_QMC6310:
 		try:
 			f=open(self.calibrationFile,'r')
 			for i in range(13):f.readline()
-			self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline())
+			self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline());sleep_ms(5)
 		except:print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.");sleep_ms(1000)
