@@ -32,9 +32,9 @@ def drawCompass(heading):
 
 while True:
     heading = compass.readHeading()
-    heading = round(heading)
-    print(heading)
     if compass.dataValid(): # only draw for valid data - prevents errors
+        heading = round(heading)
         drawCompass(heading)
     
+    print(heading) 
     sleep_ms(100)
