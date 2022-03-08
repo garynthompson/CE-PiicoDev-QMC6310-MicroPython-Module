@@ -14,6 +14,7 @@ compass.calibrate() # only need to calibrate once
 
 while True:
     heading = compass.readHeading()   # get the heading from the sensor
-    heading = round(heading)          # round to the nearest degree
-    print( str(heading) + "°")        # print the data with a degree symbol
+    if compass.dataValid():           # Rejects invalid data
+        heading = round(heading)      # round to the nearest degree
+        print( str(heading) + "°")    # print the data with a degree symbol
     sleep_ms(100)
