@@ -42,7 +42,7 @@ def _writeCrumb(x, n, c):
 class PiicoDev_QMC6310(object):
     range_gauss = {3000:1e-3, 1200:4e-4, 800:2.6666667e-4, 200:6.6666667e-5} # Maps the range (key) to sensitivity (lsb/gauss)
     range_microtesla = {3000:1e-1, 1200:4e-2, 800:2.6666667e-2, 200:6.6666667e-3} # Maps the range (key) to sensitivity (lsb/microtesla)
-    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=3, osr1=0, osr2=3, range=3000, calibrationFile='calibration.cal'):
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr=_I2C_ADDRESS, odr=3, osr1=0, osr2=3, range=3000, calibrationFile='calibration.cal', suppress_warnings=False):
         try:
             if compat_ind >= 1:
                 pass
@@ -54,6 +54,7 @@ class PiicoDev_QMC6310(object):
         self.addr = addr
         self.odr = odr
         self.calibrationFile = calibrationFile
+        self.suppress_warnings = suppress_warnings
         self._CR1 = 0x00
         self._CR2 = 0x00
         try:
@@ -71,7 +72,8 @@ class PiicoDev_QMC6310(object):
         self.declination = 0
         self.data = {}
         self._dataValid = False
-        self.loadCalibration()
+        if calibrationFile != None:
+            self.loadCalibration()
         sleep_ms(5)
     
     def _setMode(self, mode):
@@ -234,5 +236,6 @@ class PiicoDev_QMC6310(object):
             self.z_offset = float(f.readline())
             sleep_ms(5)
         except:
-            print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.")
+            if not self.suppress_warnings:
+                print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.")
             sleep_ms(1000)
