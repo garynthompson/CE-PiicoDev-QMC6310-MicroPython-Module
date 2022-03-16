@@ -27,15 +27,17 @@ def _writeBit(x,n,b):
 def _writeCrumb(x,n,c):x=_writeBit(x,n,_readBit(c,0));return _writeBit(x,n+1,_readBit(c,1))
 class PiicoDev_QMC6310:
 	range_gauss={3000:0.001,1200:0.0004,800:0.00026666667,200:6.6666667e-05};range_microtesla={3000:0.1,1200:0.04,800:0.026666667,200:0.0066666667}
-	def __init__(self,bus=_D,freq=_D,sda=_D,scl=_D,addr=_I2C_ADDRESS,odr=3,osr1=0,osr2=3,range=3000,calibrationFile='calibration.cal'):
+	def __init__(self,bus=_D,freq=_D,sda=_D,scl=_D,addr=_I2C_ADDRESS,odr=3,osr1=0,osr2=3,range=3000,calibrationFile='calibration.cal',suppress_warnings=_C):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
 		except:print(compat_str)
-		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self.odr=odr;self.calibrationFile=calibrationFile;self._CR1=0;self._CR2=0
+		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self.odr=odr;self.calibrationFile=calibrationFile;self.suppress_warnings=suppress_warnings;self._CR1=0;self._CR2=0
 		try:self._setMode(1);self.setOutputDataRate(odr);self.setOverSamplingRatio(osr1);self.setOverSamplingRate(osr2);self.setRange(range)
 		except Exception as e:print(i2c_err_str.format(self.addr));raise e
-		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.declination=0;self.data={};self._dataValid=_C;self.loadCalibration();sleep_ms(5)
+		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.declination=0;self.data={};self._dataValid=_C
+		if calibrationFile is not _D:self.loadCalibration()
+		sleep_ms(5)
 	def _setMode(self,mode):self._CR1=_writeCrumb(self._CR1,_BIT_MODE,mode);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOutputDataRate(self,odr):self._CR1=_writeCrumb(self._CR1,_BIT_ODR,odr);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOverSamplingRatio(self,osr1):self._CR1=_writeCrumb(self._CR1,_BIT_OSR1,osr1);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
@@ -91,4 +93,6 @@ class PiicoDev_QMC6310:
 			f=open(self.calibrationFile,'r')
 			for i in range(13):f.readline()
 			self.x_offset=float(f.readline());f.readline();self.y_offset=float(f.readline());f.readline();self.z_offset=float(f.readline());sleep_ms(5)
-		except:print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.");sleep_ms(1000)
+		except:
+			if not self.suppress_warnings:print("No calibration file found. Run 'calibrate()' for best results.  Visit https://piico.dev/p15 for more info.")
+			sleep_ms(1000)
