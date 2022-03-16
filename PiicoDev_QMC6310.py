@@ -72,7 +72,7 @@ class PiicoDev_QMC6310(object):
         self.declination = 0
         self.data = {}
         self._dataValid = False
-        if calibrationFile != None:
+        if calibrationFile is not None:
             self.loadCalibration()
         sleep_ms(5)
     
