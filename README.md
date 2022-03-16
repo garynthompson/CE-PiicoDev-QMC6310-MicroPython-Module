@@ -19,7 +19,7 @@ odr       | int  | 0 - 3            | 0                                     | 0:
 osr1      | int  | 0 - 3            | 0                                     | 0: 4, 2: 4, 3: 2, 4: 1
 osr2      | int  | 0 - 3            | 3                                     | 0: 1, 1: 2, 2: 4, 4: 8
 range     | int  | 200, 800, 1200, 3000 microTesla            | 200                                   | Range. Larger ranges are less sensitive.
-cal_filename | string |  | 'calibration.cal' | If more than one magnetometer (for example on seperate I2C buses or if an I2C mux is used), use a different filename for each. If set to 'None' calibration is skipped.
+cal_filename | string |  | 'calibration.cal' | If more than one magnetometer (for example on seperate I2C buses or if an I2C mux is used), use a different filename for each. If set to `None` calibration is skipped.
 
 ### `PiicoDev_QMC6310.readMagnitude()`
 Reads the magnetic field magnitude using the calibration generated during the calibration routine if available.  Magnitude range is configurable using PiicoDev_QMC6310.setRange().
