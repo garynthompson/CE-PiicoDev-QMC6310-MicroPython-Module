@@ -13,6 +13,7 @@ _ADDRESS_ZOUT=5
 _ADDRESS_STATUS=9
 _ADDRESS_CONTROL1=10
 _ADDRESS_CONTROL2=11
+_ADDRESS_SIGN=41
 _BIT_MODE=0
 _BIT_ODR=2
 _BIT_OSR1=4
@@ -27,13 +28,13 @@ def _writeBit(x,n,b):
 def _writeCrumb(x,n,c):x=_writeBit(x,n,_readBit(c,0));return _writeBit(x,n+1,_readBit(c,1))
 class PiicoDev_QMC6310:
 	range_gauss={3000:0.001,1200:0.0004,800:0.00026666667,200:6.6666667e-05};range_microtesla={3000:0.1,1200:0.04,800:0.026666667,200:0.0066666667}
-	def __init__(self,bus=_D,freq=_D,sda=_D,scl=_D,addr=_I2C_ADDRESS,odr=3,osr1=0,osr2=3,range=3000,calibrationFile='calibration.cal',suppress_warnings=_C):
+	def __init__(self,bus=_D,freq=_D,sda=_D,scl=_D,addr=_I2C_ADDRESS,odr=3,osr1=0,osr2=3,range=3000,sign_x=0,sign_y=1,sign_z=1,calibrationFile='calibration.cal',suppress_warnings=_C):
 		try:
 			if compat_ind>=1:0
 			else:print(compat_str)
 		except:print(compat_str)
-		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self.odr=odr;self.calibrationFile=calibrationFile;self.suppress_warnings=suppress_warnings;self._CR1=0;self._CR2=0
-		try:self._setMode(1);self.setOutputDataRate(odr);self.setOverSamplingRatio(osr1);self.setOverSamplingRate(osr2);self.setRange(range)
+		self.i2c=create_unified_i2c(bus=bus,freq=freq,sda=sda,scl=scl);self.addr=addr;self.odr=odr;self.calibrationFile=calibrationFile;self.suppress_warnings=suppress_warnings;self._CR1=0;self._CR2=0;sign=sign_x+sign_y*2+sign_z*4
+		try:self._setMode(1);self.setOutputDataRate(odr);self.setOverSamplingRatio(osr1);self.setOverSamplingRate(osr2);self.setRange(range);self._setSign(sign)
 		except Exception as e:print(i2c_err_str.format(self.addr));raise e
 		self.x_offset=0;self.y_offset=0;self.z_offset=0;self.declination=0;self.data={};self._dataValid=_C
 		if calibrationFile is not _D:self.loadCalibration()
@@ -43,6 +44,7 @@ class PiicoDev_QMC6310:
 	def setOverSamplingRatio(self,osr1):self._CR1=_writeCrumb(self._CR1,_BIT_OSR1,osr1);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setOverSamplingRate(self,osr2):self._CR1=_writeCrumb(self._CR1,_BIT_OSR2,osr2);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL1,bytes([self._CR1]))
 	def setRange(self,range):assert range in[3000,1200,800,200],'range must be 200,800,1200,3000 (uTesla)';r={3000:0,1200:1,800:2,200:3};self.sensitivity=self.range_microtesla[range];self._CR2=_writeCrumb(self._CR2,_BIT_RANGE,r[range]);self.i2c.writeto_mem(self.addr,_ADDRESS_CONTROL2,bytes([self._CR2]))
+	def _setSign(self,sign):self.i2c.writeto_mem(self.addr,_ADDRESS_SIGN,bytes([sign]))
 	def _convertAngleToPositive(self,angle):
 		if angle>=360.0:angle=angle-360.0
 		if angle<0:angle=angle+360.0
@@ -68,7 +70,7 @@ class PiicoDev_QMC6310:
 			self.sample={_A:x,_B:y,'z':z};self._dataValid=_E;return self.sample
 		else:print('Not Ready');self.sample=NaN;return self.sample
 	def dataValid(self):return self._dataValid
-	def readPolar(self):cartesian=self.read();angle=math.atan2(cartesian[_A],cartesian[_B])/math.pi*180.0+self.declination;angle=self._convertAngleToPositive(angle);magnitude=math.sqrt(cartesian[_A]*cartesian[_A]+cartesian[_B]*cartesian[_B]+cartesian['z']*cartesian['z']);return{'polar':angle,'Gauss':magnitude*100,'uT':magnitude}
+	def readPolar(self):cartesian=self.read();angle=math.atan2(cartesian[_A],-cartesian[_B])/math.pi*180.0+self.declination;angle=self._convertAngleToPositive(angle);magnitude=math.sqrt(cartesian[_A]*cartesian[_A]+cartesian[_B]*cartesian[_B]+cartesian['z']*cartesian['z']);return{'polar':angle,'Gauss':magnitude*100,'uT':magnitude}
 	def readMagnitude(self):return self.readPolar()['uT']
 	def readHeading(self):return self.readPolar()['polar']
 	def setDeclination(self,dec):self.declination=dec
