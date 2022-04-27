@@ -7,7 +7,7 @@ This module depends on the [PiicoDev Unified Library](https://github.com/CoreEle
 See the [Quickstart Guides](https://piico.dev/p15)
 
 ## Details
-### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C, odr=0, osr1=0, osr2=3, range=3000, cal_filename='calibration.cal')`
+### `PiicoDev_QMC6310(bus=, freq=, sda=, scl=, addr=0x1C, odr=0, osr1=0, osr2=3, range=3000, sign_x=0, sign_y=1, sign_z=1, cal_filename='calibration.cal')`
 Parameter | Type | Range            | Default                               | Description
 --------- | ---- | ---------------- | ------------------------------------- | --------------------------------------------------
 bus       | int  | 0, 1             | Raspberry Pi Pico: 0, Raspberry Pi: 1 | I2C Bus.  Ignored on Micro:bit
@@ -18,7 +18,10 @@ addr      | int  | 0x1C             | 0x1C                                  | Th
 odr       | int  | 0 - 3            | 0                                     | 0: 10Hz, 1: 50Hz, 2: 100Hz, 3: 200Hz
 osr1      | int  | 0 - 3            | 0                                     | 0: 4, 2: 4, 3: 2, 4: 1
 osr2      | int  | 0 - 3            | 3                                     | 0: 1, 1: 2, 2: 4, 4: 8
-range     | int  | 200, 800, 1200, 3000 microTesla            | 200                                   | Range. Larger ranges are less sensitive.
+range     | int  | 200, 800, 1200, 3000 microTesla | 200                    | Range. Larger ranges are less sensitive.
+sign_x    | int  | 0, 1             | 0                                     | Sign to represent the polarity of the magnetic field. 0 Matches the silk screen
+sign_y    | int  | 0, 1             | 1                                     | Sign to represent the polarity of the magnetic field. 1 Matches the silk screen
+sign_z    | int  | 0, 1             | 1                                     | Sign to represent the polarity of the magnetic field. 1 Matches the silk screen
 cal_filename | string |  | 'calibration.cal' | If more than one magnetometer (for example on seperate I2C buses or if an I2C mux is used), use a different filename for each. If set to `None` calibration is skipped.
 
 ### `PiicoDev_QMC6310.readMagnitude()`
