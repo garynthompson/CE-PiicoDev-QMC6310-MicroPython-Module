@@ -87,7 +87,7 @@ class PiicoDev_QMC6310:
 			if z<z_min:z_min=z;i=0
 			if z>z_max:z_max=z;i=0
 			j=round(10*i/range);print('\r['+int(j)*'*'+int(10-j)*' '+']',end='')
-			if enable_logging:log=log+(str(cartesian[_A])+','+str(cartesian[_B])+','+str(cartesian['z'])+'\n')
+			if enable_logging:log=log+(str(d[_A])+','+str(d[_B])+','+str(d['z'])+'\n')
 		self.setOutputDataRate(self.odr);self.x_offset=(x_max+x_min)/2;self.y_offset=(y_max+y_min)/2;self.z_offset=(z_max+z_min)/2;f=open(self.calibrationFile,'w');f.write('x_min:\n'+str(x_min)+'\nx_max:\n'+str(x_max)+'\ny_min:\n'+str(y_min)+'\ny_max:\n'+str(y_max)+'\nz_min\n'+str(z_min)+'\nz_max:\n'+str(z_max)+'\nx_offset:\n');f.write(str(self.x_offset)+'\ny_offset:\n'+str(self.y_offset)+'\nz_offset:\n'+str(self.z_offset));f.close()
 		if enable_logging:flog=open('calibration.log','w');flog.write(log);flog.close
 	def loadCalibration(self):
